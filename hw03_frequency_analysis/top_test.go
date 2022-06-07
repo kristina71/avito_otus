@@ -79,4 +79,28 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+
+	t.Run("one word", func(t *testing.T) {
+		text := "а"
+		expected := []string{
+			"а",
+		}
+		require.Equal(t, expected, Top10(text))
+	})
+
+	t.Run("less than 10 words", func(t *testing.T) {
+		text := "Это необыкновенное имя подарил ему Кристофер  Робин Надо вам"
+		expected := []string{
+			"Кристофер",
+			"Надо",
+			"Робин",
+			"Это",
+			"вам",
+			"ему",
+			"имя",
+			"необыкновенное",
+			"подарил",
+		}
+		require.Equal(t, expected, Top10(text))
+	})
 }

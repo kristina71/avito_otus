@@ -62,7 +62,7 @@ func TestTop10(t *testing.T) {
 				"кристофер", // 4
 				"не",        // 4
 			}
-			require.Subset(t, expected, Top10(text))
+			require.Equal(t, expected, Top10(text))
 		} else {
 			expected := []string{
 				"он",        // 8
@@ -76,8 +76,31 @@ func TestTop10(t *testing.T) {
 				"не",        // 4
 				"то",        // 4
 			}
-			require.ElementsMatch(t, expected, Top10(text))
-			require.Len(t, Top10(text), 10)
+			require.Equal(t, expected, Top10(text))
 		}
+	})
+
+	t.Run("one word", func(t *testing.T) {
+		text := "а"
+		expected := []string{
+			"а",
+		}
+		require.Equal(t, expected, Top10(text))
+	})
+
+	t.Run("less than 10 words", func(t *testing.T) {
+		text := "Это необыкновенное имя подарил ему Кристофер  Робин Надо вам"
+		expected := []string{
+			"Кристофер",
+			"Надо",
+			"Робин",
+			"Это",
+			"вам",
+			"ему",
+			"имя",
+			"необыкновенное",
+			"подарил",
+		}
+		require.Equal(t, expected, Top10(text))
 	})
 }

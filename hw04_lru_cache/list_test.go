@@ -49,3 +49,70 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
 }
+
+func TestListMultiType(t *testing.T) {
+	l := NewList()
+
+	l.PushBack(10)     // [10]
+	l.PushBack("test") // [10, "test"]
+
+	require.Equal(t, l.Len(), 2)
+	require.Equal(t, l.Front().Value.(int), 10)
+	require.Equal(t, l.Back().Value.(string), "test")
+}
+
+func TestListPushBackAndRemoveBack(t *testing.T) {
+	l := NewList()
+
+	l.PushBack(10) // [10]
+
+	require.Equal(t, l.Len(), 1)
+	require.Equal(t, l.Front(), l.Back())
+
+	l.PushBack(20) // [10, 20]
+
+	require.Equal(t, l.Len(), 2)
+	require.Equal(t, l.Front().Value.(int), 10)
+	require.Equal(t, l.Back().Value.(int), 20)
+
+	// remove
+	l.Remove(l.Back()) // [10]
+
+	require.Equal(t, l.Len(), 1)
+	require.Equal(t, l.Front(), l.Back())
+	require.Equal(t, l.Front().Value.(int), 10)
+
+	l.Remove(l.Back()) // []
+
+	require.Equal(t, l.Len(), 0)
+	require.Nil(t, l.Front())
+	require.Nil(t, l.Back())
+}
+
+func TestListPushFrontAndRemoveFront(t *testing.T) {
+	l := NewList()
+
+	l.PushFront(10) // [10]
+
+	require.Equal(t, l.Len(), 1)
+	require.Equal(t, l.Back(), l.Front())
+
+	l.PushFront(20) // [10, 20]
+
+	require.Equal(t, l.Len(), 2)
+	require.Equal(t, l.Back().Value.(int), 10)
+	require.Equal(t, l.Front().Value.(int), 20)
+
+	// remove
+	l.Remove(l.Front()) // [20]
+
+	require.Equal(t, l.Len(), 1)
+	require.Equal(t, l.Front(), l.Back())
+	require.Equal(t, l.Front().Value.(int), 10)
+
+	l.Remove(l.Front()) // []
+
+	require.Equal(t, l.Len(), 0)
+	require.Nil(t, l.Front())
+	require.Nil(t, l.Back())
+}

@@ -38,6 +38,28 @@ func TestRun(t *testing.T) {
 		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
 	})
 
+	t.Run("if were panic in first M tasks, than finished not more N+M tasks", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		var runTasksCount int32
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				atomic.AddInt32(&runTasksCount, 1)
+				panic(fmt.Sprintf("panic from task %d", i))
+			})
+		}
+
+		workersCount := 10
+		maxErrorsCount := 23
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.Equal(t, ErrErrorsLimitExceeded, err)
+		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
+	})
+
 	t.Run("tasks without errors", func(t *testing.T) {
 		tasksCount := 50
 		tasks := make([]Task, 0, tasksCount)
@@ -66,5 +88,16 @@ func TestRun(t *testing.T) {
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+	})
+
+	t.Run("invalid goroutine count", func(t *testing.T) {
+		var tasks []Task
+		maxErrorsCount := 99
+
+		for workersCount := -1; workersCount < 1; workersCount++ {
+			err := Run(tasks, workersCount, maxErrorsCount)
+			require.True(t, errors.Is(err, ErrInvalidGoroutineCount))
+			require.EqualError(t, err, fmt.Sprintf("invalid goroutine count given: expected > 0, actual %d", workersCount))
+		}
 	})
 }

@@ -3,11 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -65,7 +66,7 @@ func tempFile(pattern string) *os.File {
 }
 
 func createDir(inputPath string) {
-	err := os.MkdirAll(inputPath, 0777)
+	err := os.MkdirAll(inputPath, 0777) //nolint
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -62,4 +62,39 @@ func TestTelnetClient(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("test EOF", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+		defer func() { require.NoError(t, l.Close()) }()
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+			in := ioutil.NopCloser(&bytes.Buffer{})
+			out := &bytes.Buffer{}
+			timeout := time.Second * 5
+			client := NewTelnetClient(l.Addr().String(), timeout, in, out)
+
+			require.NoError(t, client.Connect())
+			defer func() { require.NoError(t, client.Close()) }()
+
+			err := client.Receive()
+			require.NoError(t, err)
+		}()
+
+		go func() {
+			defer wg.Done()
+			conn, err := l.Accept()
+			require.NoError(t, err)
+			require.NotNil(t, conn)
+
+			err = conn.Close()
+			require.NoError(t, err)
+		}()
+
+		wg.Wait()
+	})
 }

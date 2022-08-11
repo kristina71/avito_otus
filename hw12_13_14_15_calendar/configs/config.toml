@@ -1,5 +1,11 @@
 [logger]
 level = "INFO"
+log_file = ""
 
-# TODO
-# ...
+[storage]
+sql = true # if false, use in-memory db
+host = "localhost" # default
+port = 5432 # default
+user = "postgres" # default
+password = "postgres" # default
+dbname = "calendar" # default

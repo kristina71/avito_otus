@@ -32,3 +32,13 @@ lint: install-lint-deps
 	golangci-lint run ./...
 
 .PHONY: build run build-img run-img version test lint
+
+createdb:
+	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar
+	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar_test
+
+migup:
+	sql-migrate up
+
+migdown:
+	sql-migrate down

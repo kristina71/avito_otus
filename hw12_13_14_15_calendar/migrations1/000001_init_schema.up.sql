@@ -1,5 +1,4 @@
 -- +migrate Up
--- +goose Up
 CREATE TABLE IF NOT EXISTS events (
     id serial primary key,
     title varchar(256) not null,

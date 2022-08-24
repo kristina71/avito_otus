@@ -8,7 +8,7 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) -config ./configs/config.yaml
 
 build-img:
 	docker build \
@@ -23,7 +23,7 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/... ./pkg/...
+	go test -race ./internal/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
@@ -33,12 +33,24 @@ lint: install-lint-deps
 
 .PHONY: build run build-img run-img version test lint
 
+.PHONY: generate
+generate:
+	go generate ./...
+
 createdb:
 	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar
 	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar_test
 
+# через sql-migrate (в корне нужен config db) =( если делать для него то нужно переименовать migrations1->migrations
 migup:
 	sql-migrate up
 
 migdown:
 	sql-migrate down
+
+# через goose (db в корне не нужно)
+migrateUp:
+	goose -dir migrations postgres "user=postgres password=password dbname=calendar sslmode=disable" up
+
+migrateDowm:
+	goose -dir migrations postgres "user=postgres password=password dbname=calendar sslmode=disable" down

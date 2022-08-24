@@ -3,31 +3,32 @@ package internalhttp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 	"net/http"
 	"time"
+
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
 func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 	ev := storage.Event{}
 	err := json.NewDecoder(r.Body).Decode(&ev)
 
-	type id struct {
-		id int `json:"id"`
-	}
-	var idEv id
-
-	type title struct {
-		title string `json:"title"`
-	}
-	var titleEv title
+	/* type event struct {
+		id          int       `json:"id"`
+		title       string    `json:"title"`
+		description string    `json:"description"`
+		startAt     time.Time `json:"start_at"`
+		endAt       time.Time `json:"end_at"`
+		userID      int       `json:"user_id"`
+		remindAt    time.Time `json:"remind_at"`
+	} */
 
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to get request body: %v", err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.app.Create(r.Context(), idEv.id, titleEv.title)
+	ev, err = s.app.Create(r.Context(), ev.UserID, ev.Title, ev.Description, ev.StartAt, ev.EndAt)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to create event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)

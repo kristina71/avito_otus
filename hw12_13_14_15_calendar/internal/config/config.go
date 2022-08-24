@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"errors"
@@ -11,37 +11,25 @@ import (
 // При желании конфигурацию можно вынести в internal/config.
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
-type Config struct {
-	Logger       LoggerConf `yaml:"logger"`
-	Server       ServerConf `yaml:"server"`
-	DatabaseConf DatabaseConf
+/*type Config struct {
+	Logger       LoggerConf   `yaml:"logger"`
+	Server       ServerConf   `yaml:"server"`
+	DatabaseConf DatabaseConf `yaml:"database"`
+	Storage      string       `yaml:"storage"`
 }
 
-/*
+*/
+
 type Config struct {
-	Database struct {
+	Logger struct {
+		Level string
+		File  string `yaml:"file"`
+	} `yaml:"logger"`
+	Server struct {
 		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Name     string `yaml:"name"`
-		SSLMode  string `yaml:"SSLMode"`
-	} `yaml:"database"`
-	Storage string `yaml:"storage"`
-}*/
-
-type LoggerConf struct {
-	Level string
-	File  string
-}
-
-type ServerConf struct {
-	Host     string `yaml:"host"`
-	HTTPPort string `yaml:"http_port"`
-	GrpcPort string `yaml:"grpc_port"`
-}
-
-type DatabaseConf struct {
+		HTTPPort string `yaml:"http_port"`
+		GrpcPort string `yaml:"grpc_port"`
+	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`
 		Port     string `yaml:"port"`
@@ -58,20 +46,23 @@ func NewConfig(configFile string) (Config, error) {
 
 	v := viper.New()
 
-	configure(v)
-
 	if configFile != "" {
+		fmt.Println(configFile)
 		v.SetConfigFile(configFile)
 		err := v.ReadInConfig()
 		if err != nil {
 			return config, fmt.Errorf("failed to read configuration: %w", err)
 		}
+	} else {
+		configure(v)
 	}
 
+	fmt.Println(config)
 	if err := v.Unmarshal(&config); err != nil {
 		return config, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
+	fmt.Println(config)
 	if err := config.Validate(); err != nil {
 		return config, fmt.Errorf("failed to validate configuration: %w", err)
 	}
@@ -84,43 +75,36 @@ func configure(v *viper.Viper) {
 	v.AutomaticEnv()
 
 	v.SetDefault("logger.level", "INFO")
+	v.SetDefault("logger.file", "log.log")
 
 	v.SetDefault("server.host", "127.0.0.1")
 	v.SetDefault("server.httpPort", "8080")
-	v.SetDefault("server.grpcPort", "8081")
+	v.SetDefault("server.grpcPort", "50051")
 
-	v.SetDefault("database.inmem", true)
-}
+	v.SetDefault("database.host", "127.0.0.1")
+	v.SetDefault("database.port", "5432")
+	v.SetDefault("database.username", "postgres")
+	v.SetDefault("database.password", "password")
+	v.SetDefault("database.name", "calendar")
+	v.SetDefault("database.SSLMode", "disable")
 
-func (c ServerConf) Validate() error {
-	if c.Host == "" {
-		return errors.New("http app server host is required")
-	}
-
-	if c.HTTPPort == "" {
-		return errors.New("http app server port is required")
-	}
-
-	if c.GrpcPort == "" {
-		return errors.New("grpc app server port is required")
-	}
-
-	return nil
+	v.SetDefault("storage", "SQL")
 }
 
 func (c Config) Validate() error {
-	if err := c.Server.Validate(); err != nil {
-		return err
+	fmt.Println(c.Server)
+	if c.Server.Host == "" {
+		return errors.New("http app server host is required")
 	}
 
-	if err := c.Database.Validate(); err != nil {
-		return err
+	if c.Server.HTTPPort == "" {
+		return errors.New("http app server port is required")
 	}
 
-	return nil
-}
+	if c.Server.GrpcPort == "" {
+		return errors.New("internalgrpc app server port is required")
+	}
 
-func (c DatabaseConf) Validate() error {
 	if c.Database.Password == "" {
 		return errors.New("db password is required")
 	}

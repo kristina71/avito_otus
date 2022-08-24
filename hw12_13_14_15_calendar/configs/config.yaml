@@ -1,0 +1,18 @@
+# Logger config
+logger:
+  level: "INFO"
+  file: "log.log"
+# Server config
+server:
+  host: "127.0.0.1"
+  httpPort: "8080"
+  grpcPort: "50051"
+# Database config
+database:
+  host: "127.0.0.1"
+  port: "5432"
+  username: "postgres"
+  password: "password"
+  name: "calendar"
+  SSLMode: "disable"
+storage: "SQL"

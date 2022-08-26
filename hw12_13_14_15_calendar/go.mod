@@ -19,7 +19,6 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/zhashkevych/go-sqlxmock v1.5.1
-	go.uber.org/zap v1.22.0
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.28.0
 )

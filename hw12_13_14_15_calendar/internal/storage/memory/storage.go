@@ -60,6 +60,7 @@ func (s *Storage) Create(_ context.Context, event storage.Event) (storage.Event,
 	}
 	return event, nil
 }
+
 func (s *Storage) Get(_ context.Context, id int) (storage.Event, error) {
 	s.logger.Info("get the event")
 

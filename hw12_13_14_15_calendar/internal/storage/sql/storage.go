@@ -30,7 +30,7 @@ const (
 	tableName = "events"
 )
 
-/*func New(db *sqlx.DB) *Storage {
+/* func New(db *sqlx.DB) *Storage {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		"cfg.Host", "cfg.Port", "cfg.User", "cfg.Password", "cfg.DBName",
 	)
@@ -64,7 +64,7 @@ func (s *Storage) Close(ctx context.Context) error {
 ///
 
 func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, error) {
-	/*var cntr int
+	/* var cntr int
 	err := s.db.GetContext(ctx, &cntr, "select count(*) from events where start_at < $1 and end_at > $1", ev.StartAt)
 	if err != nil {
 		return storage.Event{}, err
@@ -78,9 +78,7 @@ func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, 
 		Columns("title", "start_at", "end_at", "description", "user_id", "remind_at").
 		Values(ev.Title, ev.StartAt, ev.EndAt, ev.Description, ev.UserID, ev.RemindAt).
 		Suffix("RETURNING \"id\"").ToSql()
-
-	//s.logger.Info(query)
-
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return storage.Event{}, err
@@ -101,9 +99,7 @@ func (s *Storage) Get(ctx context.Context, id int) (storage.Event, error) {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
 		From(tableName).Where(squirrel.Eq{"id": id}).ToSql()
-
-	//s.logger.Info(query)
-
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return storage.Event{}, err
@@ -127,8 +123,7 @@ func (s *Storage) Update(ctx context.Context, id int, event storage.Event) error
 		Set("description", event.Description).
 		Set("remind_at", event.RemindAt).
 		Where(squirrel.Eq{"id": id}).ToSql()
-
-	//s.logger.Info(query)
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -140,37 +135,32 @@ func (s *Storage) Update(ctx context.Context, id int, event storage.Event) error
 func (s *Storage) Delete(ctx context.Context, id int) error {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Delete(tableName).Where(squirrel.Eq{"id": id}).ToSql()
-	//s.logger.Info(query)
-
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 	_, err = s.db.Exec(query, args...)
 	return err
-	//return nil
 }
 
 func (s *Storage) DeleteAll(ctx context.Context) error {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Delete(tableName).ToSql()
-
-	//s.logger.Info(query)
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 	_, err = s.db.Exec(query, args...)
 	return err
-	//return nil
 }
 
 func (s *Storage) ListAll(ctx context.Context) ([]storage.Event, error) {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
 		From(tableName).ToSql()
-	//s.logger.Info(query)
-
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -191,8 +181,7 @@ func (s *Storage) ListDay(ctx context.Context, date time.Time) ([]storage.Event,
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
 		From(tableName).Where(squirrel.Expr("start_date BETWEEN $1 AND $1 + (interval '1d')", date)).ToSql()
-
-	//s.logger.Info(query)
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -213,8 +202,7 @@ func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
 		From(tableName).Where(squirrel.Expr("start_date BETWEEN $1 AND $1 + (interval '7d')", date)).ToSql()
-
-	//s.logger.Info(query)
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -235,8 +223,7 @@ func (s *Storage) ListMonth(ctx context.Context, date time.Time) ([]storage.Even
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
 		From(tableName).Where(squirrel.Expr("start_date BETWEEN $1 AND $1 + (interval '1months')", date)).ToSql()
-
-	//s.logger.Info(query)
+	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return nil, err

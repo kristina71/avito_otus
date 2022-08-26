@@ -4,13 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/app"
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/config"
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/server/http"
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage/initstorage"
-
 	"log"
 	"net"
 	"os"
@@ -20,6 +13,11 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/config"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage/initstorage"
 )
 
 var configFile string
@@ -37,7 +35,6 @@ func main() {
 	}
 
 	config, err := config.NewConfig(configFile)
-
 	if err != nil {
 		log.Fatalf("Config error: %v", err)
 	}
@@ -64,7 +61,7 @@ func main() {
 
 	server := internalhttp.NewServer(logger, calendar)
 
-	//grpc := internalgrpc.New(logg, calendar)
+	// grpc := internalgrpc.New(logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -98,7 +95,7 @@ func main() {
 		if err = server.Start(ctx, addrServer); err != nil {
 			logger.Error("failed to start http server: " + err.Error())
 			cancel()
-			os.Exit(1) //nolint:gocritic
+			os.Exit(1)
 		}
 	}()
 

@@ -31,7 +31,6 @@ func main() {
 	}
 
 	config, err := config.NewConfig(configFile)
-
 	if err != nil {
 		log.Fatalf("Config error: %v", err)
 	}

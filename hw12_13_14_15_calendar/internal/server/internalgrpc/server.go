@@ -1,26 +1,23 @@
 package internalgrpc
 
-import (
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/app"
-	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
-	"google.golang.org/grpc"
-)
-
 //go:generate protoc -I ../../../api EventService.proto --go_out=. --go-grpc_out=.
 
+/*
 type server struct {
 	srv  *grpc.Server
-	app  *app.App
+	app *app.App
 	logg *logger.Logger
-	//UnimplementedCalendarServer
+	UnimplementedCalendarServer
 }
+*/
 
+/*
 func New(logg *logger.Logger, app *app.App) *server {
 	return &server{
 		app:  app,
 		logg: logg,
 	}
-}
+}*/
 
 /*
 func (s *server) Start(ctx context.Context, addr string) error {
@@ -44,7 +41,8 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 func loggingServerInterceptor(logger app.Logger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, err error) {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+handler grpc.UnaryHandler) (_ interface{}, err error) {
 		logger.Info(fmt.Sprintf("method: %s, duration: %s, request: %+v", info.FullMethod, time.Since(time.Now()), req))
 		h, err := handler(ctx, req)
 		return h, err
@@ -121,16 +119,19 @@ func (s *server) DeleteEvent(ctx context.Context, request *DeleteEventRequest) (
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) GetEventsPerDay(ctx context.Context, request *GetEventsPerDayRequest) (*GetEventsPerDayResponse, error) {
+func (s *server) GetEventsPerDay(ctx context.Context,
+request *GetEventsPerDayRequest) (*GetEventsPerDayResponse, error) {
 	listEvents, err := s.app.GetEventsPerDay(ctx, request.TimeStart.AsTime())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error to get evens list: %v", err))
+		return nil, status.Errorf(codes.Internal,
+fmt.Sprintf("error to get evens list: %v", err))
 	}
 
 	return &GetEventsPerDayResponse{Events: convertStorageEvToGrpcEv(listEvents)}, nil
 }
 
-func (s *server) GetEventsPerWeek(ctx context.Context, request *GetEventsPerWeekRequest) (*GetEventsPerWeekResponse, error) {
+func (s *server) GetEventsPerWeek(ctx context.Context,
+request *GetEventsPerWeekRequest)(*GetEventsPerWeekResponse, error) {
 	listEvents, err := s.app.GetEventsPerWeek(ctx, request.Day.AsTime())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error to get evens list: %v", err))
@@ -139,10 +140,12 @@ func (s *server) GetEventsPerWeek(ctx context.Context, request *GetEventsPerWeek
 	return &GetEventsPerWeekResponse{Events: convertStorageEvToGrpcEv(listEvents)}, nil
 }
 
-func (s *server) GetEventsPerMonth(ctx context.Context, request *GetEventsPerMonthRequest) (*GetEventsPerMonthResponse, error) {
+func (s *server) GetEventsPerMonth(ctx context.Context, request *GetEventsPerMonthRequest)
+(*GetEventsPerMonthResponse, error) {
 	listEvents, err := s.app.GetEventsPerMonth(ctx, request.BeginDate.AsTime())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error to get evens list: %v", err))
+		return nil, status.Errorf(codes.Internal,
+fmt.Sprintf("error to get evens list: %v", err))
 	}
 
 	return &GetEventsPerMonthResponse{Events: convertStorageEvToGrpcEv(listEvents)}, nil

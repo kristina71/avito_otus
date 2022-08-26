@@ -16,7 +16,7 @@ type Logger struct {
 func New(level string, path string) (*Logger, error) {
 	logger := logrus.New()
 
-	loggerFile, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	loggerFile, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644) //nolint
 	if err != nil {
 		err = fmt.Errorf("error during the opening log loggerFile: %w", err)
 		return nil, err
@@ -31,11 +31,14 @@ func New(level string, path string) (*Logger, error) {
 	}
 	logger.SetLevel(loggerLevel)
 
-	logger.SetFormatter(&prefixed.TextFormatter{DisableColors: true,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
-	})
+	logger.SetFormatter(
+		&prefixed.TextFormatter{
+			DisableColors:   true,
+			TimestampFormat: "2006-01-02 15:04:05",
+			FullTimestamp:   true,
+			ForceFormatting: true,
+		},
+	)
 
 	logger.WithFields(logrus.Fields{"level": level, "loggerFile": path}).Debug("Logger setup OK")
 

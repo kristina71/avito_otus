@@ -14,5 +14,5 @@ database:
   username: "postgres"
   password: "password"
   name: "calendar"
-  SSLMode: "disable"
+  sslMode: "disable"
 storage: "SQL"

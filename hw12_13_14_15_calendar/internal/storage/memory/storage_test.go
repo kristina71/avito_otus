@@ -137,7 +137,6 @@ func TestGetEvent(t *testing.T) {
 		{
 			name: "Get event by id",
 			expectedEvent: storage.Event{
-
 				ID:          1,
 				Title:       faker.Name(),
 				StartAt:     time.Now(),

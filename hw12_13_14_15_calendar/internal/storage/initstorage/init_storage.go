@@ -21,7 +21,7 @@ func NewStorage(ctx context.Context, storageType string, dsn string) (storage.St
 
 		defer func() {
 			if err := dbStorage.Close(ctx); err != nil {
-				fmt.Errorf("error during closing db storage %w", err)
+				return
 			}
 		}()
 	default:

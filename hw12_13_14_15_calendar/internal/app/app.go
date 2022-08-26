@@ -26,7 +26,10 @@ func New(logger Logger, storage storage.Storage) *App {
 	}
 }
 
-func (a *App) Create(ctx context.Context, userID int, title string, description string, start time.Time, stop time.Time) (storage.Event, error) {
+func (a *App) Create(
+	ctx context.Context, userID int, title string,
+	description string, start time.Time, stop time.Time,
+) (storage.Event, error) {
 	var err error
 	if userID == 0 {
 		err = storage.ErrNoUserID

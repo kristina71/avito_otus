@@ -9,7 +9,6 @@ import (
 	"github.com/dailymotion/allure-go"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
-
 	sqlxmock "github.com/zhashkevych/go-sqlxmock"
 )
 
@@ -47,7 +46,8 @@ func TestInsertDB(t *testing.T) {
 					mock: func(tc *testCase) {
 						rows := sqlxmock.NewRows([]string{"id"}).AddRow(1)
 						mock.ExpectQuery("INSERT INTO events").
-							WithArgs(tc.event.Title, tc.event.StartAt, tc.event.EndAt, tc.event.Description, tc.event.UserID, tc.event.RemindAt).
+							WithArgs(tc.event.Title, tc.event.StartAt, tc.event.EndAt, tc.event.Description,
+								tc.event.UserID, tc.event.RemindAt).
 							WillReturnRows(rows)
 					},
 					id:      1,
@@ -143,14 +143,12 @@ func TestSelectDB(t *testing.T) {
 					mockData(testCase)
 
 					allure.Step(allure.Description("Get data by id and check result"), allure.Action(func() {
-						var event = storage.Event{}
-
-						event, err = stor.Get(context.Background(), int(testCase.id))
+						event, err := stor.Get(context.Background(), int(testCase.id))
 						require.NoError(t, err)
 
-						//fmt.Println(events)
+						// fmt.Println(events)
 						require.Equal(t, testCase.event, event)
-						//require.Equal(t, len(events), 1)
+						// require.Equal(t, len(events), 1)
 					}))
 				})
 			}
@@ -177,7 +175,6 @@ func TestDeleteDB(t *testing.T) {
 					mock: func(tc *testCase) {
 						mock.ExpectExec("^DELETE FROM events WHERE id = \\$1").
 							WithArgs(tc.event.ID).WillReturnResult(sqlxmock.NewResult(1, 1))
-
 					},
 					id:      1,
 					wantErr: false,
@@ -215,7 +212,6 @@ func TestDeleteAllDB(t *testing.T) {
 					mock: func(tc *testCase) {
 						mock.ExpectExec("^DELETE FROM events").
 							WillReturnResult(sqlxmock.NewResult(1, 1))
-
 					},
 					id:      1,
 					wantErr: false,
@@ -258,7 +254,8 @@ func TestUpdateDB(t *testing.T) {
 						RemindAt:    time.Now(),
 					},
 					mock: func(tc *testCase) {
-						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, end_at = \\$3, description = \\$4, remind_at = \\$5 WHERE id = \\$6").
+						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, end_at = \\$3,"+
+							" description = \\$4, remind_at = \\$5 WHERE id = \\$6").
 							WithArgs(
 								tc.event.Title,
 								tc.event.StartAt,
@@ -282,7 +279,8 @@ func TestUpdateDB(t *testing.T) {
 						RemindAt:    time.Now(),
 					},
 					mock: func(tc *testCase) {
-						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, end_at = \\$3, description = \\$4, remind_at = \\$5 WHERE id = \\$6").
+						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, end_at = \\$3,"+
+							" description = \\$4, remind_at = \\$5 WHERE id = \\$6").
 							WithArgs(tc.event.Title,
 								tc.event.StartAt,
 								tc.event.EndAt,

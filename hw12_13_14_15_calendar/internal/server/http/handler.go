@@ -12,17 +12,6 @@ import (
 func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 	ev := storage.Event{}
 	err := json.NewDecoder(r.Body).Decode(&ev)
-
-	/* type event struct {
-		id          int       `json:"id"`
-		title       string    `json:"title"`
-		description string    `json:"description"`
-		startAt     time.Time `json:"start_at"`
-		endAt       time.Time `json:"end_at"`
-		userID      int       `json:"user_id"`
-		remindAt    time.Time `json:"remind_at"`
-	} */
-
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to get request body: %v", err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -39,7 +28,7 @@ func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
 	type id struct {
-		id int `json:"id"`
+		ID int `json:"id"`
 	}
 	var idEv id
 
@@ -50,7 +39,7 @@ func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.app.Update(r.Context(), idEv.id, ev)
+	err = s.app.Update(r.Context(), idEv.ID, ev)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to update event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -61,7 +50,7 @@ func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteEvent(w http.ResponseWriter, r *http.Request) {
 	type id struct {
-		id int `json:"id"`
+		ID int `json:"id"`
 	}
 	var idEv id
 	err := json.NewDecoder(r.Body).Decode(&idEv)
@@ -70,9 +59,9 @@ func (s *Server) deleteEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.app.Delete(r.Context(), idEv.id)
+	err = s.app.Delete(r.Context(), idEv.ID)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to update event: %v", err))
+		s.logger.Error(fmt.Sprintf("error to delete event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -88,18 +77,7 @@ func (s *Server) getEventsPerDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	events, err := s.app.ListDay(r.Context(), day)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to get list of events: %v", err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = json.NewEncoder(w).Encode(events)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to get list of events: %v", err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	s.writeHeader(w, err, events)
 }
 
 func (s *Server) getEventsPerWeek(w http.ResponseWriter, r *http.Request) {
@@ -111,18 +89,7 @@ func (s *Server) getEventsPerWeek(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	events, err := s.app.ListWeek(r.Context(), day)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to get list of events: %v", err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = json.NewEncoder(w).Encode(events)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to get list of events: %v", err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	s.writeHeader(w, err, events)
 }
 
 func (s *Server) getEventsPerMonth(w http.ResponseWriter, r *http.Request) {
@@ -133,15 +100,20 @@ func (s *Server) getEventsPerMonth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	events, err := s.app.ListMonth(r.Context(), day)
+	s.writeHeader(w, err, events)
+}
+
+func (s *Server) writeHeader(w http.ResponseWriter, err error, events []storage.Event) {
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to get list of events: %v", err))
+		s.logger.Error(fmt.Sprintf("error to get list of events per month: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = json.NewEncoder(w).Encode(events)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("error to get list of events: %v", err))
+		s.logger.Error(fmt.Sprintf("error to get list of events per month: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

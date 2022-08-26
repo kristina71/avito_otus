@@ -27,8 +27,8 @@ type Config struct {
 	} `yaml:"logger"`
 	Server struct {
 		Host     string `yaml:"host"`
-		HTTPPort string `yaml:"http_port"`
-		GrpcPort string `yaml:"grpc_port"`
+		HTTPPort string `yaml:"httpPort"`
+		GrpcPort string `yaml:"grpcPort"`
 	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`
@@ -36,7 +36,7 @@ type Config struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		Name     string `yaml:"name"`
-		SSLMode  string `yaml:"SSLMode"`
+		SSLMode  string `yaml:"sslMode"`
 	} `yaml:"database"`
 	Storage string `yaml:"storage"`
 }

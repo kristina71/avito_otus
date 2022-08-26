@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bxcodec/faker/v3"
-	"github.com/dailymotion/allure-go"
+	faker "github.com/bxcodec/faker/v3"
+	allure "github.com/dailymotion/allure-go"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 	sqlxmock "github.com/zhashkevych/go-sqlxmock"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bxcodec/faker/v3"
+	faker "github.com/bxcodec/faker/v3"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage/mocks"
 	"github.com/stretchr/testify/require"

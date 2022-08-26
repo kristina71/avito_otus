@@ -16,6 +16,7 @@ type testCase struct {
 	name    string
 	mock    func(tc *testCase)
 	event   storage.Event
+	events  []storage.Event
 	id      uint16
 	wantErr bool
 }
@@ -120,7 +121,7 @@ func TestSelectDB(t *testing.T) {
 						RemindAt:    time.Now(),
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "descr", "user_id", "remind_at"}).
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
 							AddRow(
 								tc.event.ID,
 								tc.event.Title,
@@ -207,8 +208,10 @@ func TestDeleteAllDB(t *testing.T) {
 
 			testCases := []testCase{
 				{
-					name:  "OK",
-					event: storage.Event{},
+					name: "OK",
+					event: storage.Event{
+						ID: 1,
+					},
 					mock: func(tc *testCase) {
 						mock.ExpectExec("^DELETE FROM events").
 							WillReturnResult(sqlxmock.NewResult(1, 1))
@@ -225,6 +228,247 @@ func TestDeleteAllDB(t *testing.T) {
 					allure.Step(allure.Description("Delete all data and check result"), allure.Action(func() {
 						err = stor.DeleteAll(context.Background())
 						require.NoError(t, err)
+					}))
+				})
+			}
+		}))
+}
+
+func TestListAllDB(t *testing.T) {
+	t.Skip("need fixing")
+
+	allure.Test(t,
+		allure.Description("List all data in DB"),
+		allure.Action(func() {
+			db, mock, err := sqlxmock.Newx()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			stor := New(db)
+
+			testCases := []testCase{
+				{
+					name: "OK",
+					events: []storage.Event{
+						{
+							ID:          1,
+							Title:       faker.Name(),
+							StartAt:     time.Now(),
+							EndAt:       time.Now(),
+							Description: faker.Sentence(),
+							UserID:      1,
+							RemindAt:    time.Now(),
+						},
+					},
+					mock: func(tc *testCase) {
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+							AddRow(
+								tc.event.ID,
+								tc.event.Title,
+								tc.event.StartAt,
+								tc.event.EndAt,
+								tc.event.Description,
+								tc.event.UserID,
+								tc.event.RemindAt)
+						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description, user_id, remind_at FROM events").
+							WillReturnRows(rows)
+					},
+					id:      1,
+					wantErr: false,
+				},
+			}
+
+			for _, testCase := range testCases {
+				t.Run(testCase.name, func(t *testing.T) {
+					mockData(testCase)
+
+					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
+						events, err := stor.ListAll(context.Background())
+						require.NoError(t, err)
+						require.Equal(t, testCase.events, events)
+					}))
+				})
+			}
+		}))
+}
+
+func TestListDayDB(t *testing.T) {
+	t.Skip("need fixing")
+
+	allure.Test(t,
+		allure.Description("List day data in DB"),
+		allure.Action(func() {
+			db, mock, err := sqlxmock.Newx()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			stor := New(db)
+
+			testCases := []testCase{
+				{
+					name: "OK",
+					events: []storage.Event{
+						{
+							ID:          1,
+							Title:       faker.Name(),
+							StartAt:     time.Now(),
+							EndAt:       time.Now(),
+							Description: faker.Sentence(),
+							UserID:      1,
+							RemindAt:    time.Now(),
+						},
+					},
+					mock: func(tc *testCase) {
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+							AddRow(
+								tc.event.ID,
+								tc.event.Title,
+								tc.event.StartAt,
+								tc.event.EndAt,
+								tc.event.Description,
+								tc.event.UserID,
+								tc.event.RemindAt)
+						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description," +
+							" user_id, remind_at FROM events WHERE start_at BETWEEN $1 AND $1 + (interval '1d')").
+							WillReturnRows(rows)
+					},
+					id:      1,
+					wantErr: false,
+				},
+			}
+
+			for _, testCase := range testCases {
+				t.Run(testCase.name, func(t *testing.T) {
+					mockData(testCase)
+
+					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
+						events, err := stor.ListAll(context.Background())
+						require.NoError(t, err)
+						require.Equal(t, testCase.events, events)
+					}))
+				})
+			}
+		}))
+}
+
+func TestListWeekDB(t *testing.T) {
+	t.Skip("need fixing")
+
+	allure.Test(t,
+		allure.Description("List week data in DB"),
+		allure.Action(func() {
+			db, mock, err := sqlxmock.Newx()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			stor := New(db)
+
+			testCases := []testCase{
+				{
+					name: "OK",
+					events: []storage.Event{
+						{
+							ID:          1,
+							Title:       faker.Name(),
+							StartAt:     time.Now(),
+							EndAt:       time.Now(),
+							Description: faker.Sentence(),
+							UserID:      1,
+							RemindAt:    time.Now(),
+						},
+					},
+					mock: func(tc *testCase) {
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+							AddRow(
+								tc.event.ID,
+								tc.event.Title,
+								tc.event.StartAt,
+								tc.event.EndAt,
+								tc.event.Description,
+								tc.event.UserID,
+								tc.event.RemindAt)
+						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description, user_id," +
+							" remind_at FROM events WHERE start_at BETWEEN $1 AND $1 + (interval '7d')").
+							WillReturnRows(rows)
+					},
+					id:      1,
+					wantErr: false,
+				},
+			}
+
+			for _, testCase := range testCases {
+				t.Run(testCase.name, func(t *testing.T) {
+					mockData(testCase)
+
+					day := time.Now()
+					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
+						events, err := stor.ListWeek(context.Background(), day)
+						require.NoError(t, err)
+						require.Equal(t, testCase.events, events)
+					}))
+				})
+			}
+		}))
+}
+
+func TestListMonthDB(t *testing.T) {
+	t.Skip("need fixing")
+
+	allure.Test(t,
+		allure.Description("List month data in DB"),
+		allure.Action(func() {
+			db, mock, err := sqlxmock.Newx()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			stor := New(db)
+
+			testCases := []testCase{
+				{
+					name: "OK",
+					events: []storage.Event{
+						{
+							ID:          1,
+							Title:       faker.Name(),
+							StartAt:     time.Now(),
+							EndAt:       time.Now(),
+							Description: faker.Sentence(),
+							UserID:      1,
+							RemindAt:    time.Now(),
+						},
+					},
+					mock: func(tc *testCase) {
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+							AddRow(
+								tc.event.ID,
+								tc.event.Title,
+								tc.event.StartAt,
+								tc.event.EndAt,
+								tc.event.Description,
+								tc.event.UserID,
+								tc.event.RemindAt)
+						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description, " +
+							" user_id, remind_at FROM events WHERE start_at BETWEEN $1 AND $1 + (interval '1months')").
+							WillReturnRows(rows)
+					},
+					id:      1,
+					wantErr: false,
+				},
+			}
+
+			for _, testCase := range testCases {
+				t.Run(testCase.name, func(t *testing.T) {
+					mockData(testCase)
+
+					day := time.Now()
+					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
+						events, err := stor.ListMonth(context.Background(), day)
+						require.NoError(t, err)
+						require.Equal(t, testCase.events, events)
 					}))
 				})
 			}

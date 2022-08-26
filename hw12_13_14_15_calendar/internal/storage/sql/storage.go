@@ -180,7 +180,7 @@ func (s *Storage) ListAll(ctx context.Context) ([]storage.Event, error) {
 func (s *Storage) ListDay(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).Where(squirrel.Expr("start_date BETWEEN $1 AND $1 + (interval '1d')", date)).ToSql()
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '1d')", date)).ToSql()
 	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
@@ -201,7 +201,7 @@ func (s *Storage) ListDay(ctx context.Context, date time.Time) ([]storage.Event,
 func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).Where(squirrel.Expr("start_date BETWEEN $1 AND $1 + (interval '7d')", date)).ToSql()
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '7d')", date)).ToSql()
 	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
@@ -222,7 +222,7 @@ func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event
 func (s *Storage) ListMonth(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).Where(squirrel.Expr("start_date BETWEEN $1 AND $1 + (interval '1months')", date)).ToSql()
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '1months')", date)).ToSql()
 	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)

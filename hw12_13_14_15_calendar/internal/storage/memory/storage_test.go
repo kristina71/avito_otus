@@ -155,9 +155,12 @@ func TestGetEvent(t *testing.T) {
 			name: "Get event by id",
 			expectedEvent: storage.Event{
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> HW-12 Implement db logic
+=======
+>>>>>>> HW-12 Fix linter issues
 				ID:          1,
 				Title:       faker.Name(),
 				StartAt:     time.Now(),

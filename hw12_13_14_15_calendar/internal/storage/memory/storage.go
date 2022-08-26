@@ -59,54 +59,8 @@ func (s *Storage) Create(_ context.Context, event storage.Event) (storage.Event,
 		RemindAt:    event.RemindAt,
 	}
 	return event, nil
-<<<<<<< HEAD
 }
 
-func (s *Storage) Get(_ context.Context, id int) (storage.Event, error) {
-	s.logger.Info("get the event")
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	event, ok := s.data[id]
-	if !ok {
-		return storage.Event{}, storage.ErrEvent404
-	}
-	return event, nil
-}
-
-func (s *Storage) Update(_ context.Context, id int, change storage.Event) error {
-	s.logger.Info("update the event")
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	event, ok := s.data[id]
-	if !ok {
-		return storage.ErrEvent404
-	}
-
-	event.Title = change.Title
-	event.StartAt = change.StartAt
-	event.EndAt = change.EndAt
-	event.Description = change.Description
-	event.RemindAt = change.RemindAt
-	s.data[id] = event
-
-	return nil
-}
-
-func (s *Storage) Delete(_ context.Context, id int) error {
-	s.logger.Info("delete the event")
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.data, id)
-	return nil
-=======
->>>>>>> HW-12 Implement db logic
-}
 func (s *Storage) Get(_ context.Context, id int) (storage.Event, error) {
 	s.logger.Info("get the event")
 
@@ -154,12 +108,6 @@ func (s *Storage) Delete(_ context.Context, id int) error {
 func (s *Storage) DeleteAll(_ context.Context) error {
 	s.logger.Info("delete all events")
 
-<<<<<<< HEAD
-func (s *Storage) DeleteAll(_ context.Context) error {
-	s.logger.Info("delete all events")
-
-=======
->>>>>>> HW-12 Implement db logic
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

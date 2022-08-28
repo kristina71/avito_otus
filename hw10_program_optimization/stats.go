@@ -1,67 +1,50 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
+	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"regexp"
 	"strings"
 )
 
-type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+const bufferSize = 512
+
+//easyjson:json
+type UserEmail struct {
+	Email string
 }
 
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
-	}
-	return countDomains(u, domain)
-}
-
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return
+	if domain == "" {
+		return nil, fmt.Errorf("domain must not be empty")
 	}
 
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
+	result := DomainStat{}
+	domainSuffix := "." + domain
 
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
+	scanner := bufio.NewScanner(r)
+	buffer := make([]byte, bufferSize)
+	scanner.Buffer(buffer, 3*bufferSize)
+	userEmail := &UserEmail{}
+	for scanner.Scan() {
+		*userEmail = UserEmail{}
+		if err := userEmail.UnmarshalJSON(scanner.Bytes()); err != nil {
 			return nil, err
 		}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		email := userEmail.Email
+		if strings.HasSuffix(email, domainSuffix) {
+			idx := strings.IndexRune(email, '@')
+			if idx < 0 {
+				return nil, fmt.Errorf("invalid email format: %s is not valid (should contain \"@\" symbol)", userEmail.Email)
+			}
+			result[strings.ToLower(email[idx+1:])]++
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("reading error: %w", err)
 	}
 	return result, nil
 }

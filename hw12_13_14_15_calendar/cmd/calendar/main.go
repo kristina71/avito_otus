@@ -3,21 +3,27 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"log"
+	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/config"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage/initstorage"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -28,13 +34,34 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	config, err := config.NewConfig(configFile)
+	if err != nil {
+		log.Fatalf("Config error: %v", err)
+	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	logger, err := logger.New(config.Logger.Level, config.Logger.File)
+	if err != nil {
+		log.Fatalf("Logger error: %v", err)
+	}
 
-	server := internalhttp.NewServer(logg, calendar)
+	ctx := context.Background()
+
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", config.Database.Username,
+		config.Database.Password, config.Database.Host, config.Database.Port, config.Database.Name,
+		config.Database.SSLMode)
+
+	storage, err := initstorage.NewStorage(ctx, config.Storage, dsn)
+	if err != nil {
+		logger.Error("failed to connect DB: " + err.Error())
+	}
+
+	logger.Info("DB connected...")
+
+	calendar := app.New(logger, storage)
+
+	server := internalhttp.NewServer(logger, calendar)
+
+	// grpc := internalgrpc.New(logg, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -46,16 +73,42 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if err = server.Stop(ctx); err != nil {
+			logger.Error("failed to stop http server: " + err.Error())
+		}
+
+		/*if err = internalgrpc.Stop(ctx); err != nil {
+			logg.Error("failed to stop grpc server: " + err.Error())
+		}
+
+		if err = calendar.Close(ctx); err != nil {
+			logg.Error("failed close storage: " + err.Error())
+		}*/
+	}()
+
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		addrServer := net.JoinHostPort(config.Server.Host, config.Server.HTTPPort)
+		if err = server.Start(ctx, addrServer); err != nil {
+			logger.Error("failed to start http server: " + err.Error())
+			cancel()
+			os.Exit(1)
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	/*go func() {
+		defer wg.Done()
+		addrServer := net.JoinHostPort(config.Server.Host, config.Server.GrpcPort)
+		if err = internalgrpc.Start(ctx, addrServer); err != nil {
+			logg.Error("failed to start gRPC server: " + err.Error())
+			cancel()
+			os.Exit(1) //nolint:gocritic
+		}
+	}()*/
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
+	<-ctx.Done()
+	wg.Wait()
 }

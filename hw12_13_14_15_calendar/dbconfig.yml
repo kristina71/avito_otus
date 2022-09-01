@@ -1,0 +1,10 @@
+development:
+  dialect: postgres
+  datasource: postgresql://postgres:postgres@localhost:5432/calendar?sslmode=disable
+  dir: migrations/
+
+production:
+  dialect: postgres
+  datasource: dbname=calendar sslmode=disable host=localhost user=postgres
+  dir: migrations/postgres
+  table: migrations

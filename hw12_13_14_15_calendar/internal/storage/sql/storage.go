@@ -78,6 +78,7 @@ func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, 
 		Columns("title", "start_at", "end_at", "description", "user_id", "remind_at").
 		Values(ev.Title, ev.StartAt, ev.EndAt, ev.Description, ev.UserID, ev.RemindAt).
 		Suffix("RETURNING \"id\"").ToSql()
+
 	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
@@ -91,7 +92,6 @@ func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, 
 	}
 
 	ev.ID = id
-
 	return ev, nil
 }
 
@@ -109,8 +109,9 @@ func (s *Storage) Get(ctx context.Context, id int) (storage.Event, error) {
 	err = s.db.Get(&events, query, args...)
 
 	if err == sql.ErrNoRows {
-		return storage.Event{}, fmt.Errorf("заврапать ошибку")
+		return storage.Event{}, fmt.Errorf("No rows")
 	}
+
 	return events, nil
 }
 

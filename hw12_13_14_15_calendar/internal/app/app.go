@@ -28,7 +28,7 @@ func New(logger Logger, storage storage.Storage) *App {
 
 func (a *App) Create(
 	ctx context.Context, userID int, title string,
-	description string, start time.Time, stop time.Time,
+	description string, start time.Time, stop time.Time, remindAt time.Time,
 ) (storage.Event, error) {
 	var err error
 	if userID == 0 {
@@ -39,21 +39,21 @@ func (a *App) Create(
 		err = storage.ErrEmptyTitle
 		return storage.Event{}, err
 	}
-	if start.After(stop) {
+	/* if start.After(stop) {
 		start, stop = stop, start
 	}
 	if time.Now().After(start) {
 		err = storage.ErrStartInPast
 		return storage.Event{}, err
-	}
-	/*isBusy, err := a.storage.IsTimeBusy(ctx, start, stop, 0)
+	} */
+	/* isBusy, err := a.storage.IsTimeBusy(ctx, start, stop, 0)
 	if err != nil {
 		return storage.Event{}, err
 	}
 	if isBusy {
 		err = storage.ErrDateBusy
 		return storage.Event{}, err
-	}*/
+	} */
 
 	event1 := storage.Event{
 		ID:          1,
@@ -61,7 +61,7 @@ func (a *App) Create(
 		Description: description,
 		StartAt:     start,
 		EndAt:       stop,
-		RemindAt:    stop,
+		RemindAt:    remindAt,
 	}
 
 	return a.storage.Create(ctx, event1)

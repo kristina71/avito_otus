@@ -17,7 +17,7 @@ func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ev, err = s.app.Create(r.Context(), ev.UserID, ev.Title, ev.Description, ev.StartAt, ev.EndAt)
+	ev, err = s.app.Create(r.Context(), ev.UserID, ev.Title, ev.Description, ev.StartAt, ev.EndAt, ev.RemindAt)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to create event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)

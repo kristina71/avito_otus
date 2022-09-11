@@ -12,7 +12,7 @@ import (
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/config"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/mq"
-	"google.golang.org/genproto/googleapis/storage/v1"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
 var configFile string

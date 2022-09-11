@@ -1,17 +1,22 @@
 BIN := "./bin/calendar"
 DOCKER_IMG="calendar:develop"
-MIGRATOR := "$(BINDIR)/db_migrator"
-SCHEDULER := "$(BINDIR)/calendar_scheduler"
-SENDER := "$(BINDIR)/calendar_sender"
+MIGRATOR := "./bin/db_migration"
+SCHEDULER := "./bin/calendar_scheduler"
+SENDER := "./bin/calendar_sender"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(MIGRATOR) -ldflags "$(LDFLAGS)" ./cmd/db_migration
+	go build -v -o $(SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.yaml
+	$(BIN) -config ./configs/config_rmq.yaml
+	$(BIN) -config ./configs/config_schedule.yaml
 
 build-img:
 	docker build \
@@ -44,6 +49,10 @@ generate:
 createdb:
 	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar
 	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar_test
+
+
+# migrateUp: почему-то так не работает
+#	$(MIGRATOR) -config ./configs/config.yaml -dir=./migrations up
 
 migrateUp:
 	goose -dir migrations postgres "user=postgres password=password dbname=calendar sslmode=disable" up

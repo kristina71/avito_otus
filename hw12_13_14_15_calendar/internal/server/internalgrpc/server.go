@@ -1,25 +1,32 @@
 package internalgrpc
 
+import (
+	"context"
+	"fmt"
+	"net"
+	"time"
+
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/app"
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
+	"google.golang.org/grpc"
+)
+
 //go:generate protoc -I ../../../api EventService.proto --go_out=. --go-grpc_out=.
 
-/*
 type server struct {
 	srv  *grpc.Server
-	app *app.App
+	app  *app.App
 	logg *logger.Logger
-	UnimplementedCalendarServer
+	UnimplementedEventServer
 }
-*/
 
-/*
 func New(logg *logger.Logger, app *app.App) *server {
 	return &server{
 		app:  app,
 		logg: logg,
 	}
-}*/
+}
 
-/*
 func (s *server) Start(ctx context.Context, addr string) error {
 	s.logg.Info("gRPC server starting...")
 	lsn, err := net.Listen("tcp", addr)
@@ -27,7 +34,7 @@ func (s *server) Start(ctx context.Context, addr string) error {
 		return err
 	}
 	s.srv = grpc.NewServer(grpc.UnaryInterceptor(loggingServerInterceptor(*s.logg)))
-	RegisterCalendarServer(s.srv, s)
+	RegisterEventServer(s.srv, s)
 	if err = s.srv.Serve(lsn); err != nil {
 		return err
 	}
@@ -41,14 +48,15 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 func loggingServerInterceptor(logger app.Logger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
-handler grpc.UnaryHandler) (_ interface{}, err error) {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+	) (_ interface{}, err error) {
 		logger.Info(fmt.Sprintf("method: %s, duration: %s, request: %+v", info.FullMethod, time.Since(time.Now()), req))
 		h, err := handler(ctx, req)
 		return h, err
 	}
 }
 
+/*
 func (s *server) CreateEvent(ctx context.Context, request *EventRequest) (*CreateResponse, error) {
 	id, err := uuid.FromString(request.Event.Id)
 	if err != nil {
@@ -151,16 +159,16 @@ fmt.Sprintf("error to get evens list: %v", err))
 	return &GetEventsPerMonthResponse{Events: convertStorageEvToGrpcEv(listEvents)}, nil
 }
 
-func convertStorageEvToGrpcEv(events []storage.Event) []*Event {
-	resultEvents := make([]*Event, 0, len(events))
+func convertStorageEvToGrpcEv(events []storage.Event) []*storage.Event {
+	resultEvents := make([]*storage.Event, 0, len(events))
 	for _, event := range events {
-		resultEvent := &Event{
+		resultEvent := &storage.Event{
 			Id:           event.ID.String(),
 			Title:        event.Title,
-			TimeStart:    timestamppb.New(event.TimeStart),
+			StartAt:    timestamppb.New(event.StartAt),
 			Duration:     durationpb.New(event.Duration),
 			Description:  event.Description,
-			UserId:       event.UserID.String(),
+			UserID:       event.UserID.String(),
 			NotifyBefore: int32(event.NotifyBeforeDays),
 		}
 		resultEvents = append(resultEvents, resultEvent)

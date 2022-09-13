@@ -24,7 +24,7 @@ type Event struct {
 type Storage interface {
 	Create(ctx context.Context, event Event) (Event, error)
 	Get(ctx context.Context, id int) (Event, error)
-	Update(ctx context.Context, id int, event Event) error
+	Update(ctx context.Context, event Event) error
 	Delete(ctx context.Context, id int) error
 
 	DeleteAll(ctx context.Context) error
@@ -32,5 +32,6 @@ type Storage interface {
 	ListDay(ctx context.Context, date time.Time) ([]Event, error)
 	ListWeek(ctx context.Context, date time.Time) ([]Event, error)
 	ListMonth(ctx context.Context, date time.Time) ([]Event, error)
-	// IsTimeBusy(ctx context.Context, start, stop time.Time, excludeID int) (bool, error)
+	Close(ctx context.Context) error
+	IsTimeBusy(ctx context.Context, start, stop time.Time, excludeID int) (bool, error)
 }

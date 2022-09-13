@@ -16,6 +16,7 @@ require (
 	github.com/pressly/goose v2.7.0+incompatible
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.12.0
+	github.com/steinfletcher/apitest v1.5.12
 	github.com/stretchr/testify v1.8.0
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/zhashkevych/go-sqlxmock v1.5.1

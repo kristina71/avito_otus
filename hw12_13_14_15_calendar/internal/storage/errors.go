@@ -9,4 +9,5 @@ var (
 	ErrEmptyTitle  = errors.New("empty title")
 	ErrStartInPast = errors.New("start in past")
 	ErrDateBusy    = errors.New("err date busy")
+	ErrNoRows      = errors.New("err no rows")
 )

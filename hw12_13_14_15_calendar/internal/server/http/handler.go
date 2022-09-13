@@ -27,11 +27,6 @@ func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
-	type id struct {
-		ID int `json:"id"`
-	}
-	var idEv id
-
 	ev := storage.Event{}
 	err := json.NewDecoder(r.Body).Decode(&ev)
 	if err != nil {
@@ -39,7 +34,7 @@ func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.app.Update(r.Context(), idEv.ID, ev)
+	err = s.app.Update(r.Context(), ev)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to update event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,6 +57,21 @@ func (s *Server) deleteEvent(w http.ResponseWriter, r *http.Request) {
 	err = s.app.Delete(r.Context(), idEv.ID)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to delete event: %v", err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) getEvents(w http.ResponseWriter, r *http.Request) {
+	events, err := s.app.ListAll(r.Context())
+	s.writeHeader(w, err, events)
+}
+
+func (s *Server) deleteAllEvents(w http.ResponseWriter, r *http.Request) {
+	err := s.app.DeleteAll(r.Context())
+	if err != nil {
+		s.logger.Error(fmt.Sprintf("error to delete events: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

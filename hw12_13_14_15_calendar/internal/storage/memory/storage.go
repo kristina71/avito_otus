@@ -36,14 +36,12 @@ func (s *Storage) Connect(_ context.Context) error {
 	return nil
 }
 
-func (s *Storage) Close() error {
+func (s *Storage) Close(_ context.Context) error {
 	s.logger.Info("closing memory storage")
 	return nil
 }
 
 func (s *Storage) Create(_ context.Context, event storage.Event) (storage.Event, error) {
-	s.logger.Info("create a new event")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -62,8 +60,6 @@ func (s *Storage) Create(_ context.Context, event storage.Event) (storage.Event,
 }
 
 func (s *Storage) Get(_ context.Context, id int) (storage.Event, error) {
-	s.logger.Info("get the event")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -74,13 +70,11 @@ func (s *Storage) Get(_ context.Context, id int) (storage.Event, error) {
 	return event, nil
 }
 
-func (s *Storage) Update(_ context.Context, id int, change storage.Event) error {
-	s.logger.Info("update the event")
-
+func (s *Storage) Update(_ context.Context, change storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	event, ok := s.data[id]
+	event, ok := s.data[change.ID]
 	if !ok {
 		return storage.ErrEvent404
 	}
@@ -90,14 +84,12 @@ func (s *Storage) Update(_ context.Context, id int, change storage.Event) error 
 	event.EndAt = change.EndAt
 	event.Description = change.Description
 	event.RemindAt = change.RemindAt
-	s.data[id] = event
+	s.data[change.ID] = event
 
 	return nil
 }
 
 func (s *Storage) Delete(_ context.Context, id int) error {
-	s.logger.Info("delete the event")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -106,8 +98,6 @@ func (s *Storage) Delete(_ context.Context, id int) error {
 }
 
 func (s *Storage) DeleteAll(_ context.Context) error {
-	s.logger.Info("delete all events")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -116,8 +106,6 @@ func (s *Storage) DeleteAll(_ context.Context) error {
 }
 
 func (s *Storage) ListAll(_ context.Context) ([]storage.Event, error) {
-	s.logger.Info("get all events")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -132,8 +120,6 @@ func (s *Storage) ListAll(_ context.Context) ([]storage.Event, error) {
 }
 
 func (s *Storage) ListDay(_ context.Context, date time.Time) ([]storage.Event, error) {
-	s.logger.Info("get events by day")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -152,8 +138,6 @@ func (s *Storage) ListDay(_ context.Context, date time.Time) ([]storage.Event, e
 }
 
 func (s *Storage) ListWeek(_ context.Context, date time.Time) ([]storage.Event, error) {
-	s.logger.Info("get events by week")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -172,8 +156,6 @@ func (s *Storage) ListWeek(_ context.Context, date time.Time) ([]storage.Event, 
 }
 
 func (s *Storage) ListMonth(_ context.Context, date time.Time) ([]storage.Event, error) {
-	s.logger.Info("get events by month")
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -191,18 +173,15 @@ func (s *Storage) ListMonth(_ context.Context, date time.Time) ([]storage.Event,
 	return result, nil
 }
 
-func (s *Storage) IsTimeBusy(_ context.Context, userID int, start, stop time.Time, excludeID int) (bool, error) {
-	s.logger.Info("is time to busy")
-
+func (s *Storage) IsTimeBusy(_ context.Context, start, stop time.Time, excludeID int) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	/*for _, event := range s.data {
-		if event.UserID == userID && event.ID != string(excludeID) && event.StartAt.Before(stop) && event.EndAt.After(start) {
+	for _, event := range s.data {
+		if event.ID != excludeID && event.StartAt.Before(stop) && event.EndAt.After(start) {
 			return true, nil
 		}
 	}
-	*/
 
 	return false, nil
 }

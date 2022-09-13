@@ -31,8 +31,6 @@ type testCase struct {
 	event  storage.Event
 }
 
-// надо подумать как очищать данные при первом запуске и перед выполнением каждого теста
-
 func TestCreateGetDeleteEvent(t *testing.T) {
 	calendar, ctx := getCalendar()
 
@@ -42,11 +40,11 @@ func TestCreateGetDeleteEvent(t *testing.T) {
 			event: storage.Event{
 				ID:          1,
 				Title:       faker.Name(),
-				StartAt:     time.Now(),
-				EndAt:       time.Now(),
+				StartAt:     time.Now().AddDate(0, 0, 2),
+				EndAt:       time.Now().AddDate(0, 0, 3),
 				Description: faker.Sentence(),
 				UserID:      1,
-				RemindAt:    time.Now(),
+				RemindAt:    time.Now().AddDate(0, 0, 4),
 			},
 		},
 	}
@@ -87,8 +85,8 @@ func TestCreateUpdateEvent(t *testing.T) {
 			event: storage.Event{
 				ID:          1,
 				Title:       faker.Name(),
-				StartAt:     time.Now(),
-				EndAt:       time.Now(),
+				StartAt:     time.Now().AddDate(0, 0, 2),
+				EndAt:       time.Now().AddDate(0, 0, 3),
 				Description: faker.Sentence(),
 				UserID:      1,
 				RemindAt:    time.Now(),
@@ -109,7 +107,7 @@ func TestCreateUpdateEvent(t *testing.T) {
 
 			// не проверяю целиком, так как может поменяться порядок startAt и endAt
 			// или не совпадет время на сервере
-			err = calendar.Update(ctx, event.ID, event)
+			err = calendar.Update(ctx, event)
 			require.NoError(t, err)
 		})
 	}
@@ -125,8 +123,8 @@ func TestCreateDeleteAll(t *testing.T) {
 				{
 					ID:          1,
 					Title:       faker.Name(),
-					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					StartAt:     time.Now().AddDate(0, 0, 2),
+					EndAt:       time.Now().AddDate(0, 0, 3),
 					Description: faker.Sentence(),
 					UserID:      1,
 					RemindAt:    time.Now(),
@@ -134,8 +132,8 @@ func TestCreateDeleteAll(t *testing.T) {
 				{
 					ID:          2,
 					Title:       faker.Name(),
-					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					StartAt:     time.Now().AddDate(0, 0, 2),
+					EndAt:       time.Now().AddDate(0, 0, 3),
 					Description: faker.Sentence(),
 					UserID:      2,
 					RemindAt:    time.Now(),
@@ -170,8 +168,8 @@ func TestCreateDeleteAll(t *testing.T) {
 
 			// не проверяю целиком, так как может поменяться порядок startAt и endAt
 			// или не совпадет время на сервере
-			// require.Contains(t, testCase.events[0].ID, events)
-			// require.Contains(t, testCase.events[1].ID, events)
+			require.Equal(t, testCase.events[0].Title, events[1].Title)
+			require.Equal(t, testCase.events[1].Title, events[0].Title)
 
 			err = calendar.DeleteAll(ctx)
 			require.NoError(t, err)
@@ -193,8 +191,8 @@ func TestCreateGetLists(t *testing.T) {
 				{
 					ID:          1,
 					Title:       faker.Name(),
-					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					StartAt:     time.Now().AddDate(0, 0, 2),
+					EndAt:       time.Now().AddDate(0, 0, 3),
 					Description: faker.Sentence(),
 					UserID:      1,
 					RemindAt:    time.Now(),
@@ -202,8 +200,8 @@ func TestCreateGetLists(t *testing.T) {
 				{
 					ID:          2,
 					Title:       faker.Name(),
-					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					StartAt:     time.Now().AddDate(0, 0, 2),
+					EndAt:       time.Now().AddDate(0, 0, 3),
 					Description: faker.Sentence(),
 					UserID:      2,
 					// - 2 months
@@ -212,8 +210,8 @@ func TestCreateGetLists(t *testing.T) {
 				{
 					ID:          3,
 					Title:       faker.Name(),
-					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					StartAt:     time.Now().AddDate(0, 0, 2),
+					EndAt:       time.Now().AddDate(0, 0, 3),
 					Description: faker.Sentence(),
 					UserID:      3,
 					// - 2 week
@@ -225,7 +223,7 @@ func TestCreateGetLists(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			_, err := calendar.Create(ctx,
+			newEvent0, err := calendar.Create(ctx,
 				testCase.events[0].UserID,
 				testCase.events[0].Title,
 				testCase.events[0].Description,
@@ -234,7 +232,7 @@ func TestCreateGetLists(t *testing.T) {
 				testCase.event.RemindAt)
 			require.NoError(t, err)
 
-			_, err = calendar.Create(ctx,
+			newEvent1, err := calendar.Create(ctx,
 				testCase.events[1].UserID,
 				testCase.events[1].Title,
 				testCase.events[1].Description,
@@ -243,7 +241,7 @@ func TestCreateGetLists(t *testing.T) {
 				testCase.event.RemindAt)
 			require.NoError(t, err)
 
-			_, err = calendar.Create(ctx,
+			newEvent2, err := calendar.Create(ctx,
 				testCase.events[2].UserID,
 				testCase.events[2].Title,
 				testCase.events[2].Description,
@@ -252,19 +250,26 @@ func TestCreateGetLists(t *testing.T) {
 				testCase.event.RemindAt)
 			require.NoError(t, err)
 
-			/*events, err := calendar.ListAll(ctx)
+			events, err := calendar.ListAll(ctx)
 			require.NoError(t, err)
-			require.Equal(t, testCase.events, events)
-			date := time.Now()
+
+			require.Equal(t, events[0].ID, newEvent2.ID)
+			require.Equal(t, events[1].ID, newEvent1.ID)
+			require.Equal(t, events[2].ID, newEvent0.ID)
+
+			/* date := time.Now()
 			dayEvents, err := calendar.ListDay(ctx, date)
 			require.NoError(t, err)
-			require.Equal(t, testCase.events[0], dayEvents)
+			require.Contains(t, testCase.events[0], dayEvents)
+
 			monthEvents, err := calendar.ListMonth(ctx, date)
 			require.NoError(t, err)
-			require.Equal(t, testCase.events[2], monthEvents)
+			require.Contains(t, testCase.events[2], monthEvents)
 			weekEvents, err := calendar.ListWeek(ctx, date)
 			require.NoError(t, err)
-			require.Equal(t, testCase.events[1], weekEvents)*/
+			require.Contains(t, testCase.events[1], weekEvents)
+
+			*/
 
 			err = calendar.DeleteAll(ctx)
 			require.NoError(t, err)

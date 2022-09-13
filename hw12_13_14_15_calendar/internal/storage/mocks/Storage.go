@@ -15,6 +15,20 @@ type Storage struct {
 	mock.Mock
 }
 
+// Close provides a mock function with given fields: ctx
+func (_m *Storage) Close(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: ctx, event
 func (_m *Storage) Create(ctx context.Context, event storage.Event) (storage.Event, error) {
 	ret := _m.Called(ctx, event)
@@ -78,6 +92,27 @@ func (_m *Storage) Get(ctx context.Context, id int) (storage.Event, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
 		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IsTimeBusy provides a mock function with given fields: ctx, start, stop, excludeID
+func (_m *Storage) IsTimeBusy(ctx context.Context, start time.Time, stop time.Time, excludeID int) (bool, error) {
+	ret := _m.Called(ctx, start, stop, excludeID)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, time.Time, int) bool); ok {
+		r0 = rf(ctx, start, stop, excludeID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time, time.Time, int) error); ok {
+		r1 = rf(ctx, start, stop, excludeID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -177,13 +212,13 @@ func (_m *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Even
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: ctx, id, event
-func (_m *Storage) Update(ctx context.Context, id int, event storage.Event) error {
-	ret := _m.Called(ctx, id, event)
+// Update provides a mock function with given fields: ctx, event
+func (_m *Storage) Update(ctx context.Context, event storage.Event) error {
+	ret := _m.Called(ctx, event)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, storage.Event) error); ok {
-		r0 = rf(ctx, id, event)
+	if rf, ok := ret.Get(0).(func(context.Context, storage.Event) error); ok {
+		r0 = rf(ctx, event)
 	} else {
 		r0 = ret.Error(0)
 	}

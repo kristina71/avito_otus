@@ -3,6 +3,7 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -49,19 +50,17 @@ func (s *Storage) Connect(ctx context.Context, dsn string) (err error) {
 		return fmt.Errorf("failed to connect to db: %w", err)
 	}
 
-	//	s.logger.Info("connect to db")
 	return s.db.PingContext(ctx)
 }
 
 func (s *Storage) Close(ctx context.Context) error {
-	//	s.logger.Info("close sql connection to db")
 	if err := s.db.Close(); err != nil {
 		return fmt.Errorf("error during db connection pool closing: %w", err)
 	}
 	return nil
 }
 
-///
+var psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, error) {
 	/* var cntr int
@@ -73,7 +72,6 @@ func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, 
 		return storage.Event{}, storage.ErrEventExists
 	}
 	*/
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Insert(tableName).
 		Columns("title", "start_at", "end_at", "description", "user_id", "remind_at").
 		Values(ev.Title, ev.StartAt, ev.EndAt, ev.Description, ev.UserID, ev.RemindAt).
@@ -83,6 +81,7 @@ func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, 
 		log.Println(err)
 		return storage.Event{}, err
 	}
+	fmt.Println(query)
 	var id int
 	err = s.db.QueryRow(query, args...).Scan(&id)
 	if err != nil {
@@ -96,10 +95,8 @@ func (s *Storage) Create(ctx context.Context, ev storage.Event) (storage.Event, 
 }
 
 func (s *Storage) Get(ctx context.Context, id int) (storage.Event, error) {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
 		From(tableName).Where(squirrel.Eq{"id": id}).ToSql()
-	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return storage.Event{}, err
@@ -108,22 +105,20 @@ func (s *Storage) Get(ctx context.Context, id int) (storage.Event, error) {
 	events := storage.Event{}
 	err = s.db.Get(&events, query, args...)
 
-	if err == sql.ErrNoRows {
-		return storage.Event{}, fmt.Errorf("заврапать ошибку")
+	if errors.Is(err, sql.ErrNoRows) {
+		return storage.Event{}, storage.ErrNoRows
 	}
 	return events, nil
 }
 
-func (s *Storage) Update(ctx context.Context, id int, event storage.Event) error {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+func (s *Storage) Update(ctx context.Context, event storage.Event) error {
 	query, args, err := psql.Update(tableName).
 		Set("title", event.Title).
 		Set("start_at", event.StartAt).
 		Set("end_at", event.EndAt).
 		Set("description", event.Description).
 		Set("remind_at", event.RemindAt).
-		Where(squirrel.Eq{"id": id}).ToSql()
-	// s.logger.Info(query)
+		Where(squirrel.Eq{"id": event.ID}).ToSql()
 	if err != nil {
 		log.Println(err)
 		return err
@@ -133,9 +128,7 @@ func (s *Storage) Update(ctx context.Context, id int, event storage.Event) error
 }
 
 func (s *Storage) Delete(ctx context.Context, id int) error {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Delete(tableName).Where(squirrel.Eq{"id": id}).ToSql()
-	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -145,9 +138,7 @@ func (s *Storage) Delete(ctx context.Context, id int) error {
 }
 
 func (s *Storage) DeleteAll(ctx context.Context) error {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := psql.Delete(tableName).ToSql()
-	// s.logger.Info(query)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -157,10 +148,8 @@ func (s *Storage) DeleteAll(ctx context.Context) error {
 }
 
 func (s *Storage) ListAll(ctx context.Context) ([]storage.Event, error) {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).ToSql()
-	// s.logger.Info(query)
+		From(tableName).OrderBy("id desc").ToSql()
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -178,10 +167,8 @@ func (s *Storage) ListAll(ctx context.Context) ([]storage.Event, error) {
 }
 
 func (s *Storage) ListDay(ctx context.Context, date time.Time) ([]storage.Event, error) {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '1d')", date)).ToSql()
-	// s.logger.Info(query)
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '1d')", date)).OrderBy("id desc").ToSql()
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -199,10 +186,8 @@ func (s *Storage) ListDay(ctx context.Context, date time.Time) ([]storage.Event,
 }
 
 func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event, error) {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '7d')", date)).ToSql()
-	// s.logger.Info(query)
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '7d')", date)).OrderBy("id desc").ToSql()
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -220,10 +205,9 @@ func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event
 }
 
 func (s *Storage) ListMonth(ctx context.Context, date time.Time) ([]storage.Event, error) {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, _, err := psql.Select("id", "title", "start_at", "end_at", "description", "user_id", "remind_at").
-		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '1months')", date)).ToSql()
-	// s.logger.Info(query)
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $1 + (interval '1months')", date)).
+		OrderBy("id desc").ToSql()
 	if err != nil {
 		log.Println(err)
 		return nil, err

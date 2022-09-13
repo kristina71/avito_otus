@@ -97,7 +97,6 @@ func TestInsertDB(t *testing.T) {
 }
 
 func TestSelectDB(t *testing.T) {
-
 	allure.Test(t,
 		allure.Description("Select data in DB"),
 		allure.Action(func() {
@@ -235,8 +234,6 @@ func TestDeleteAllDB(t *testing.T) {
 }
 
 func TestListAllDB(t *testing.T) {
-	t.Skip("need fixing")
-
 	allure.Test(t,
 		allure.Description("List all data in DB"),
 		allure.Action(func() {
@@ -543,7 +540,7 @@ func TestUpdateDB(t *testing.T) {
 					mockData(testCase)
 
 					allure.Step(allure.Description("Update data and check result"), allure.Action(func() {
-						err = stor.Update(context.Background(), int(testCase.id), testCase.event)
+						err = stor.Update(context.Background(), testCase.event)
 						require.NoError(t, err)
 					}))
 				})

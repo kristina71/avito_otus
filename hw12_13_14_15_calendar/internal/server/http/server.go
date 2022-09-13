@@ -24,31 +24,15 @@ type Logger interface {
 	Debug(msg string)
 }
 
-/*
-type Application interface { // TODO
-}
-*/
-
-/*func HelloWorld(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := r.Body.Close(); err != nil {
-			zap.L().Error("unable to close response body for request", zap.Error(err))
-		}
-	}()
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Hello World!")); err != nil {
-		zap.L().Error("http write error", zap.Error(err))
-	}
-}
-*/
-
 func NewServer(logger Logger, app *app.App) *Server {
 	service := &Server{logger: logger, app: app}
 	service.router = mux.NewRouter()
 	service.router.Use(loggingMiddleware(service.logger))
+	service.router.HandleFunc("/calendar/get", service.getEvents).Methods("GET")
 	service.router.HandleFunc("/calendar/add", service.createEvent).Methods("POST")
-	service.router.HandleFunc("/calendar/update", service.updateEvent).Methods("PUT")
+	service.router.HandleFunc("/calendar/update/{eventId}", service.updateEvent).Methods("PUT")
 	service.router.HandleFunc("/calendar/delete/{eventId}", service.deleteEvent).Methods("DELETE")
+	service.router.HandleFunc("/calendar/deleteall", service.deleteAllEvents).Methods("DELETE")
 	service.router.HandleFunc(
 		"/calendar/find/{period:[a-zA-Z]+}/{year:[0-9]{4}}/{month:[0-9]{2}}/{day:[0-9]{2}}",
 		service.getEventsPerDay,
@@ -61,6 +45,12 @@ func NewServer(logger Logger, app *app.App) *Server {
 		"/calendar/find/{period:[a-zA-Z]+}/{year:[0-9]{4}}/{month:[0-9]{2}}/{day:[0-9]{2}}",
 		service.getEventsPerMonth,
 	).Methods("GET")
+
+	// для отображения ui
+	service.router.Handle("/", http.FileServer(http.Dir("./ui"))).Methods(http.MethodGet)
+
+	staticDir := "/ui/js/"
+	service.router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
 	return service
 }

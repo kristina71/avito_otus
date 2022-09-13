@@ -15,8 +15,6 @@ type testCase struct {
 	name           string
 	expectedEvents []storage.Event
 	expectedEvent  storage.Event
-	// wantErr        bool
-	// prepare        func(t *testing.T) string
 }
 
 func TestCreate(t *testing.T) {
@@ -83,10 +81,10 @@ func TestGetEvent(t *testing.T) {
 	}
 }
 
-func TestUpdateUrl(t *testing.T) {
+func TestUpdate(t *testing.T) {
 	testCases := []testCase{
 		{
-			name: "Update url",
+			name: "Update event",
 			expectedEvent: storage.Event{
 				ID:          1,
 				Title:       faker.Name(),
@@ -105,9 +103,9 @@ func TestUpdateUrl(t *testing.T) {
 			memorystorage := New1(repo)
 			expected := testCase.expectedEvent
 
-			repo.On("Update", context.Background(), testCase.expectedEvent.ID, expected).Return(nil)
+			repo.On("Update", context.Background(), expected).Return(nil)
 
-			err := memorystorage.repo.Update(context.Background(), testCase.expectedEvent.ID, testCase.expectedEvent)
+			err := memorystorage.repo.Update(context.Background(), testCase.expectedEvent)
 			require.NoError(t, err)
 		})
 	}

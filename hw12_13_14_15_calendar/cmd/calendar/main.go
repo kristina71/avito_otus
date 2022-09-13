@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/server/internalgrpc"
+
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/app"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/config"
@@ -61,7 +63,7 @@ func main() {
 
 	server := internalhttp.NewServer(logger, calendar)
 
-	// grpc := internalgrpc.New(logg, calendar)
+	grpc := internalgrpc.New(logger, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -77,13 +79,13 @@ func main() {
 			logger.Error("failed to stop http server: " + err.Error())
 		}
 
-		/*if err = internalgrpc.Stop(ctx); err != nil {
-			logg.Error("failed to stop grpc server: " + err.Error())
+		if err = grpc.Stop(ctx); err != nil {
+			logger.Error("failed to stop grpc server: " + err.Error())
 		}
 
 		if err = calendar.Close(ctx); err != nil {
-			logg.Error("failed close storage: " + err.Error())
-		}*/
+			logger.Error("failed close storage: " + err.Error())
+		}
 	}()
 
 	wg := &sync.WaitGroup{}
@@ -99,15 +101,15 @@ func main() {
 		}
 	}()
 
-	/*go func() {
+	go func() {
 		defer wg.Done()
 		addrServer := net.JoinHostPort(config.Server.Host, config.Server.GrpcPort)
-		if err = internalgrpc.Start(ctx, addrServer); err != nil {
-			logg.Error("failed to start gRPC server: " + err.Error())
+		if err = grpc.Start(ctx, addrServer); err != nil {
+			logger.Error("failed to start gRPC server: " + err.Error())
 			cancel()
-			os.Exit(1) //nolint:gocritic
+			os.Exit(1)
 		}
-	}()*/
+	}()
 
 	<-ctx.Done()
 	wg.Wait()

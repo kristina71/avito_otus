@@ -42,16 +42,11 @@ createdb:
 	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar
 	PGHOST=localhost PGUSER=postgres PGPORT=5432 createdb сalendar_test
 
-# через sql-migrate (в корне нужен config db) =( если делать для него то нужно переименовать migrations1->migrations
-migup:
-	sql-migrate up
-
-migdown:
-	sql-migrate down
-
-# через goose (db в корне не нужно)
 migrateUp:
 	goose -dir migrations postgres "user=postgres password=password dbname=calendar sslmode=disable" up
 
 migrateDowm:
 	goose -dir migrations postgres "user=postgres password=password dbname=calendar sslmode=disable" down
+
+start-evans:
+	evans --proto api/*.proto repl

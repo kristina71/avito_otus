@@ -4,48 +4,68 @@ package event;
 option go_package = "./;internalgrpc";
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/Duration.proto";
+import "google/protobuf/empty.proto";
 
-service Event {
-  rpc Create(EventRequest) returns (CreateResponse) {}
-  rpc Update(EventRequest) returns (UpdateResponse) {}
-  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
-  rpc DeleteAll(DeleteAllRequest) returns (DeleteAllResponse) {}
-  rpc ListDay (ListRequest) returns (ListResponse) {}
-  rpc ListWeek (ListRequest) returns (ListResponse) {}
-  rpc ListMonth (ListRequest) returns (ListResponse) {}
-}
-
-message EventRequest {
-  int32 id = 1;
+message Event {
+  string id = 1;
   string title = 2;
-  google.protobuf.Timestamp start_at = 3;
-  google.protobuf.Timestamp end_at = 4;
+  google.protobuf.Timestamp time_start = 3;
+  int32 duration = 4;
   string description = 5;
-  int32 user_id = 6;
-  google.protobuf.Duration remind_at = 7;
+  string user_id = 6;
+  int32 notify_before = 7;
 }
 
-message CreateResponse {
-  int32 id = 1;
+service Calendar {
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
+  rpc UpdateEvent(UpdateEventRequest) returns (google.protobuf.Empty);
+  rpc DeleteEvent(DeleteEventRequest) returns (google.protobuf.Empty);
+  rpc DeleteAll(DeleteAllRequest) returns (google.protobuf.Empty);
+  rpc GetEventsPerDay(GetEventsPerDayRequest) returns (GetEventsPerDayResponse);
+  rpc GetEventsPerWeek(GetEventsPerWeekRequest) returns (GetEventsPerWeekResponse);
+  rpc GetEventsPerMonth(GetEventsPerMonthRequest) returns (GetEventsPerMonthResponse);
 }
 
-message UpdateResponse {}
-
-message DeleteRequest {
-  int32 id = 1;
+message CreateEventRequest {
+  Event event = 1;
 }
 
-message DeleteResponse {}
-
-message DeleteAllRequest{}
-
-message DeleteAllResponse{}
-
-message ListRequest {
-  google.protobuf.Timestamp date = 1;
+message CreateEventResponse {
+  string id = 1;
 }
 
-message ListResponse{
-    repeated EventRequest events = 1;
+message UpdateEventRequest {
+  Event event = 1;
+}
+
+message DeleteEventRequest {
+  string id = 1;
+}
+
+message DeleteAllRequest {
+  Event event = 1;
+}
+
+message GetEventsPerDayRequest {
+  google.protobuf.Timestamp time_start = 1;
+}
+
+message GetEventsPerDayResponse {
+  repeated Event events = 1;
+}
+
+message GetEventsPerWeekRequest {
+  google.protobuf.Timestamp day = 1;
+}
+
+message GetEventsPerWeekResponse {
+  repeated Event events = 1;
+}
+
+message GetEventsPerMonthRequest {
+  google.protobuf.Timestamp begin_date = 1;
+}
+
+message GetEventsPerMonthResponse {
+  repeated Event events = 1;
 }

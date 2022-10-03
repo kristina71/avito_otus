@@ -7,18 +7,22 @@ import (
 	"time"
 
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/logger"
+
+	"github.com/gofrs/uuid"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Storage struct {
-	mu     sync.RWMutex
-	lastID int
-	data   data
-	logger logger.Logger
+	mu        sync.Mutex
+	mapEvents map[uuid.UUID]storage.Event
+	logger    logger.Logger
 }
 
 func New() *Storage {
-	return &Storage{data: make(map[int]storage.Event)}
+	return &Storage{
+		mu:        sync.Mutex{},
+		mapEvents: make(map[uuid.UUID]storage.Event),
+	}
 }
 
 type Repository struct {
@@ -28,8 +32,6 @@ type Repository struct {
 func New1(repo storage.Storage) *Repository {
 	return &Repository{repo: repo}
 }
-
-type data map[int]storage.Event
 
 func (s *Storage) Connect(_ context.Context) error {
 	s.logger.Info("connected to memory storage")
@@ -41,154 +43,151 @@ func (s *Storage) Close(_ context.Context) error {
 	return nil
 }
 
-func (s *Storage) Create(_ context.Context, event storage.Event) (storage.Event, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := s.newID()
-	event.ID = id
-	s.data[id] = storage.Event{
-		ID:          id,
-		Title:       event.Title,
-		StartAt:     event.StartAt,
-		EndAt:       event.EndAt,
-		Description: event.Description,
-		UserID:      event.UserID,
-		RemindAt:    event.RemindAt,
+func (s *Storage) Create(ctx context.Context, event *storage.Event) error {
+	select {
+	case <-ctx.Done():
+		return storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		for _, evValue := range s.mapEvents {
+			if event.StartAt.Equal(evValue.StartAt) && event.ID != evValue.ID {
+				return storage.ErrDateBusy
+			} else if event.StartAt.Equal(evValue.StartAt) && event.ID == evValue.ID {
+				return storage.ErrEventExists
+			}
+		}
+		s.mapEvents[event.ID] = *event
 	}
-	return event, nil
-}
-
-func (s *Storage) Get(_ context.Context, id int) (storage.Event, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	event, ok := s.data[id]
-	if !ok {
-		return storage.Event{}, storage.ErrEvent404
-	}
-	return event, nil
-}
-
-func (s *Storage) Update(_ context.Context, change storage.Event) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	event, ok := s.data[change.ID]
-	if !ok {
-		return storage.ErrEvent404
-	}
-
-	event.Title = change.Title
-	event.StartAt = change.StartAt
-	event.EndAt = change.EndAt
-	event.Description = change.Description
-	event.RemindAt = change.RemindAt
-	s.data[change.ID] = event
-
 	return nil
 }
 
-func (s *Storage) Delete(_ context.Context, id int) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *Storage) Get(ctx context.Context, event *storage.Event) (uuid.UUID, error) {
+	select {
+	case <-ctx.Done():
+		return uuid.Nil, storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if _, ok := s.mapEvents[event.ID]; ok {
+			return event.ID, nil
+		}
+	}
+	return uuid.Nil, storage.ErrEvent404
+}
 
-	delete(s.data, id)
+func (s *Storage) ListAll(ctx context.Context) ([]storage.Event, error) {
+	select {
+	case <-ctx.Done():
+		return []storage.Event{}, storage.ErrCanceledByContext
+	default:
+		result := make([]storage.Event, 0, len(s.mapEvents))
+		for _, event := range s.mapEvents {
+			result = append(result, event)
+		}
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].StartAt.Before(result[j].StartAt)
+		})
+		return result, nil
+	}
+	return []storage.Event{}, storage.ErrEvent404
+}
+
+func (s *Storage) DeleteAll(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+	}
 	return nil
 }
 
-func (s *Storage) DeleteAll(_ context.Context) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.data = make(data)
+func (s *Storage) Delete(ctx context.Context, id uuid.UUID) error {
+	select {
+	case <-ctx.Done():
+		return storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if _, ok := s.mapEvents[id]; !ok {
+			return storage.ErrEvent404
+		}
+		delete(s.mapEvents, id)
+	}
 	return nil
 }
 
-func (s *Storage) ListAll(_ context.Context) ([]storage.Event, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	result := make([]storage.Event, 0, len(s.data))
-	for _, event := range s.data {
-		result = append(result, event)
+func (s *Storage) Update(ctx context.Context, event *storage.Event) error {
+	select {
+	case <-ctx.Done():
+		return storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if _, ok := s.mapEvents[event.ID]; !ok {
+			return storage.ErrEvent404
+		}
+		s.mapEvents[event.ID] = *event
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].StartAt.Before(result[j].StartAt)
-	})
-	return result, nil
+	return nil
 }
 
-func (s *Storage) ListDay(_ context.Context, date time.Time) ([]storage.Event, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	var result []storage.Event
-	year, month, day := date.Date()
-	for _, event := range s.data {
-		eventYear, eventMonth, eventDay := event.StartAt.Date()
-		if eventYear == year && eventMonth == month && eventDay == day {
-			result = append(result, event)
+func (s *Storage) GetEventsPerDay(ctx context.Context, day time.Time) ([]storage.Event, error) {
+	eventsPerDay := make([]storage.Event, 0)
+	select {
+	case <-ctx.Done():
+		return nil, storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		for _, eventStruct := range s.mapEvents {
+			if eventStruct.StartAt.Year() == day.Year() && eventStruct.StartAt.Month() == day.Month() &&
+				eventStruct.StartAt.Day() == day.Day() {
+				eventsPerDay = append(eventsPerDay, eventStruct)
+			}
 		}
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].StartAt.Before(result[j].StartAt)
-	})
-	return result, nil
+	return eventsPerDay, nil
 }
 
-func (s *Storage) ListWeek(_ context.Context, date time.Time) ([]storage.Event, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	var result []storage.Event
-	year, week := date.ISOWeek()
-	for _, event := range s.data {
-		eventYear, eventWeek := event.StartAt.ISOWeek()
-		if eventYear == year && eventWeek == week {
-			result = append(result, event)
+func (s *Storage) GetEventsPerWeek(ctx context.Context, beginDate time.Time) ([]storage.Event, error) {
+	eventsPerWeek := make([]storage.Event, 0)
+	select {
+	case <-ctx.Done():
+		return nil, storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		endDay := beginDate.AddDate(0, 0, 7)
+		for _, eventStruct := range s.mapEvents {
+			if (eventStruct.StartAt.After(beginDate) || eventStruct.StartAt.Equal(beginDate)) &&
+				(eventStruct.StartAt.Before(endDay) || eventStruct.StartAt.Equal(endDay)) {
+				eventsPerWeek = append(eventsPerWeek, eventStruct)
+			}
 		}
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].StartAt.Before(result[j].StartAt)
-	})
-	return result, nil
+	return eventsPerWeek, nil
 }
 
-func (s *Storage) ListMonth(_ context.Context, date time.Time) ([]storage.Event, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	var result []storage.Event
-	year, month, _ := date.Date()
-	for _, event := range s.data {
-		eventYear, eventMonth, _ := event.StartAt.Date()
-		if eventYear == year && eventMonth == month {
-			result = append(result, event)
+func (s *Storage) GetEventsPerMonth(ctx context.Context, beginDate time.Time) ([]storage.Event, error) {
+	eventsPerMonth := make([]storage.Event, 0)
+	select {
+	case <-ctx.Done():
+		return nil, storage.ErrCanceledByContext
+	default:
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		endDay := beginDate.AddDate(0, 1, 0)
+		for _, eventStruct := range s.mapEvents {
+			if (eventStruct.StartAt.After(beginDate) || eventStruct.StartAt.Equal(beginDate)) &&
+				(eventStruct.StartAt.Before(endDay) || eventStruct.StartAt.Equal(endDay)) {
+				eventsPerMonth = append(eventsPerMonth, eventStruct)
+			}
 		}
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].StartAt.Before(result[j].StartAt)
-	})
-	return result, nil
-}
-
-func (s *Storage) IsTimeBusy(_ context.Context, start, stop time.Time, excludeID int) (bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, event := range s.data {
-		if event.ID != excludeID && event.StartAt.Before(stop) && event.EndAt.After(start) {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (s *Storage) newID() int {
-	s.lastID++
-	return s.lastID
+	return eventsPerMonth, nil
 }
 
 func (s *Storage) String() string {

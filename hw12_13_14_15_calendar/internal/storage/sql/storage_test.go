@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	uuid2 "github.com/gofrs/uuid"
+	"github.com/google/uuid"
+
 	faker "github.com/bxcodec/faker/v3"
 	allure "github.com/dailymotion/allure-go"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
@@ -13,12 +16,10 @@ import (
 )
 
 type testCase struct {
-	name    string
-	mock    func(tc *testCase)
-	event   storage.Event
-	events  []storage.Event
-	id      uint16
-	wantErr bool
+	name   string
+	mock   func(tc *testCase)
+	event  storage.Event
+	events []storage.Event
 }
 
 func TestInsertDB(t *testing.T) {
@@ -36,46 +37,38 @@ func TestInsertDB(t *testing.T) {
 				{
 					name: "OK",
 					event: storage.Event{
-						ID:          1,
+						ID:          uuid2.UUID(uuid.New()),
 						Title:       faker.Name(),
 						StartAt:     time.Now(),
-						EndAt:       time.Now(),
+						Duration:    3,
 						Description: faker.Sentence(),
-						UserID:      1,
-						RemindAt:    time.Now(),
+						UserID:      uuid2.UUID(uuid.New()),
+						RemindAt:    3,
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id"}).AddRow(1)
-						mock.ExpectQuery("INSERT INTO events").
-							WithArgs(tc.event.Title, tc.event.StartAt, tc.event.EndAt, tc.event.Description,
-								tc.event.UserID, tc.event.RemindAt).
-							WillReturnRows(rows)
+						sqlxmock.NewRows([]string{"id"}).AddRow(1)
+						mock.ExpectExec("INSERT INTO events").
+							WithArgs(tc.event.ID, tc.event.Title, tc.event.StartAt, tc.event.Duration, tc.event.Description,
+								tc.event.UserID, tc.event.RemindAt).WillReturnResult(sqlxmock.NewResult(1, 1))
 					},
-					id:      1,
-					wantErr: false,
 				},
 				{
 					name: "Insert empty fields",
 					event: storage.Event{
+						ID:          uuid2.UUID(uuid.New()),
 						Title:       "",
 						StartAt:     time.Now(),
-						EndAt:       time.Now(),
+						Duration:    3,
 						Description: "",
-						UserID:      1,
-						RemindAt:    time.Now(),
+						UserID:      uuid2.UUID(uuid.New()),
+						RemindAt:    3,
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id"}).AddRow(1)
-						mock.ExpectQuery("INSERT INTO events").
-							WithArgs(tc.event.Title,
-								tc.event.StartAt,
-								tc.event.EndAt,
-								tc.event.Description,
-								tc.event.UserID,
-								tc.event.RemindAt).
-							WillReturnRows(rows)
+						sqlxmock.NewRows([]string{"id"}).AddRow(1)
+						mock.ExpectExec("INSERT INTO events").
+							WithArgs(tc.event.ID, tc.event.Title, tc.event.StartAt, tc.event.Duration, tc.event.Description,
+								tc.event.UserID, tc.event.RemindAt).WillReturnResult(sqlxmock.NewResult(1, 1))
 					},
-					wantErr: true,
 				},
 			}
 
@@ -84,12 +77,9 @@ func TestInsertDB(t *testing.T) {
 					mockData(testCase)
 
 					allure.Step(allure.Description("Insert data and check result"), allure.Action(func() {
-						event, err := stor.Create(context.Background(), testCase.event)
+						err := stor.Create(context.Background(), &testCase.event)
 
 						require.NoError(t, err)
-						if testCase.wantErr != true {
-							require.Equal(t, testCase.event, event)
-						}
 					}))
 				})
 			}
@@ -111,21 +101,21 @@ func TestSelectDB(t *testing.T) {
 				{
 					name: "OK",
 					event: storage.Event{
-						ID:          1,
+						ID:          uuid2.UUID(uuid.New()),
 						Title:       faker.Name(),
 						StartAt:     time.Now(),
-						EndAt:       time.Now(),
+						Duration:    3,
 						Description: faker.Sentence(),
-						UserID:      1,
-						RemindAt:    time.Now(),
+						UserID:      uuid2.UUID(uuid.New()),
+						RemindAt:    3,
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "duration", "description", "user_id", "remind_at"}).
 							AddRow(
 								tc.event.ID,
 								tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.UserID,
 								tc.event.RemindAt)
@@ -133,8 +123,6 @@ func TestSelectDB(t *testing.T) {
 							WithArgs(tc.event.ID).
 							WillReturnRows(rows)
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -143,12 +131,10 @@ func TestSelectDB(t *testing.T) {
 					mockData(testCase)
 
 					allure.Step(allure.Description("Get data by id and check result"), allure.Action(func() {
-						event, err := stor.Get(context.Background(), int(testCase.id))
+						id, err := stor.Get(context.Background(), &testCase.event)
 						require.NoError(t, err)
 
-						// fmt.Println(events)
-						require.Equal(t, testCase.event, event)
-						// require.Equal(t, len(events), 1)
+						require.Equal(t, testCase.event.ID, id)
 					}))
 				})
 			}
@@ -170,14 +156,12 @@ func TestDeleteDB(t *testing.T) {
 				{
 					name: "OK",
 					event: storage.Event{
-						ID: 1,
+						ID: uuid2.UUID(uuid.New()),
 					},
 					mock: func(tc *testCase) {
 						mock.ExpectExec("^DELETE FROM events WHERE id = \\$1").
 							WithArgs(tc.event.ID).WillReturnResult(sqlxmock.NewResult(1, 1))
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -186,7 +170,7 @@ func TestDeleteDB(t *testing.T) {
 					mockData(testCase)
 
 					allure.Step(allure.Description("Delete data and check result"), allure.Action(func() {
-						err = stor.Delete(context.Background(), int(testCase.id))
+						err = stor.Delete(context.Background(), testCase.event.ID)
 						require.NoError(t, err)
 					}))
 				})
@@ -209,14 +193,12 @@ func TestDeleteAllDB(t *testing.T) {
 				{
 					name: "OK",
 					event: storage.Event{
-						ID: 1,
+						ID: uuid2.UUID(uuid.New()),
 					},
 					mock: func(tc *testCase) {
 						mock.ExpectExec("^DELETE FROM events").
 							WillReturnResult(sqlxmock.NewResult(1, 1))
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -249,30 +231,28 @@ func TestListAllDB(t *testing.T) {
 					name: "OK",
 					events: []storage.Event{
 						{
-							ID:          1,
+							ID:          uuid2.UUID(uuid.New()),
 							Title:       faker.Name(),
 							StartAt:     time.Now(),
-							EndAt:       time.Now(),
+							Duration:    3,
 							Description: faker.Sentence(),
-							UserID:      1,
-							RemindAt:    time.Now(),
+							UserID:      uuid2.UUID(uuid.New()),
+							RemindAt:    3,
 						},
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "duration", "description", "user_id", "remind_at"}).
 							AddRow(
 								tc.event.ID,
 								tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.UserID,
 								tc.event.RemindAt)
-						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description, user_id, remind_at FROM events").
+						mock.ExpectQuery("^SELECT id, title, start_at, duration, description, user_id, remind_at FROM events").
 							WillReturnRows(rows)
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -283,7 +263,7 @@ func TestListAllDB(t *testing.T) {
 					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
 						events, err := stor.ListAll(context.Background())
 						require.NoError(t, err)
-						require.Equal(t, testCase.events, events)
+						require.NotEmpty(t, events)
 					}))
 				})
 			}
@@ -308,31 +288,29 @@ func TestListDayDB(t *testing.T) {
 					name: "OK",
 					events: []storage.Event{
 						{
-							ID:          1,
+							ID:          uuid2.UUID(uuid.New()),
 							Title:       faker.Name(),
 							StartAt:     time.Now(),
-							EndAt:       time.Now(),
+							Duration:    3,
 							Description: faker.Sentence(),
-							UserID:      1,
-							RemindAt:    time.Now(),
+							UserID:      uuid2.UUID(uuid.New()),
+							RemindAt:    3,
 						},
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "duration", "description", "user_id", "remind_at"}).
 							AddRow(
 								tc.event.ID,
 								tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.UserID,
 								tc.event.RemindAt)
-						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description," +
+						mock.ExpectQuery("^SELECT id, title, start_at, duration, description," +
 							" user_id, remind_at FROM events WHERE start_at BETWEEN $1 AND $1 + (interval '1d')").
 							WillReturnRows(rows)
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -368,31 +346,29 @@ func TestListWeekDB(t *testing.T) {
 					name: "OK",
 					events: []storage.Event{
 						{
-							ID:          1,
+							ID:          uuid2.UUID(uuid.New()),
 							Title:       faker.Name(),
 							StartAt:     time.Now(),
-							EndAt:       time.Now(),
+							Duration:    3,
 							Description: faker.Sentence(),
-							UserID:      1,
-							RemindAt:    time.Now(),
+							UserID:      uuid2.UUID(uuid.New()),
+							RemindAt:    3,
 						},
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "duration", "description", "user_id", "remind_at"}).
 							AddRow(
 								tc.event.ID,
 								tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.UserID,
 								tc.event.RemindAt)
-						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description, user_id," +
+						mock.ExpectQuery("^SELECT id, title, start_at, duration, description, user_id," +
 							" remind_at FROM events WHERE start_at BETWEEN $1 AND $1 + (interval '7d')").
 							WillReturnRows(rows)
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -402,7 +378,7 @@ func TestListWeekDB(t *testing.T) {
 
 					day := time.Now()
 					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
-						events, err := stor.ListWeek(context.Background(), day)
+						events, err := stor.GetEventsPerWeek(context.Background(), day)
 						require.NoError(t, err)
 						require.Equal(t, testCase.events, events)
 					}))
@@ -429,31 +405,29 @@ func TestListMonthDB(t *testing.T) {
 					name: "OK",
 					events: []storage.Event{
 						{
-							ID:          1,
+							ID:          uuid2.UUID(uuid.New()),
 							Title:       faker.Name(),
 							StartAt:     time.Now(),
-							EndAt:       time.Now(),
+							Duration:    3,
 							Description: faker.Sentence(),
-							UserID:      1,
-							RemindAt:    time.Now(),
+							UserID:      uuid2.UUID(uuid.New()),
+							RemindAt:    3,
 						},
 					},
 					mock: func(tc *testCase) {
-						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "end_at", "description", "user_id", "remind_at"}).
+						rows := sqlxmock.NewRows([]string{"id", "title", "start_at", "duration", "description", "user_id", "remind_at"}).
 							AddRow(
 								tc.event.ID,
 								tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.UserID,
 								tc.event.RemindAt)
-						mock.ExpectQuery("^SELECT id, title, start_at, end_at, description, " +
+						mock.ExpectQuery("^SELECT id, title, start_at, duration, description, " +
 							" user_id, remind_at FROM events WHERE start_at BETWEEN $1 AND $1 + (interval '1months')").
 							WillReturnRows(rows)
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -463,7 +437,7 @@ func TestListMonthDB(t *testing.T) {
 
 					day := time.Now()
 					allure.Step(allure.Description("Select all data and check result"), allure.Action(func() {
-						events, err := stor.ListMonth(context.Background(), day)
+						events, err := stor.GetEventsPerMonth(context.Background(), day)
 						require.NoError(t, err)
 						require.Equal(t, testCase.events, events)
 					}))
@@ -487,51 +461,47 @@ func TestUpdateDB(t *testing.T) {
 				{
 					name: "OK",
 					event: storage.Event{
-						ID:          1,
+						ID:          uuid2.UUID(uuid.New()),
 						Title:       faker.Name(),
 						StartAt:     time.Now(),
-						EndAt:       time.Now(),
+						Duration:    3,
 						Description: faker.Sentence(),
-						RemindAt:    time.Now(),
+						RemindAt:    3,
 					},
 					mock: func(tc *testCase) {
-						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, end_at = \\$3,"+
+						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, duration = \\$3,"+
 							" description = \\$4, remind_at = \\$5 WHERE id = \\$6").
 							WithArgs(
 								tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.RemindAt,
 								tc.event.ID,
 							).WillReturnResult(sqlxmock.NewResult(1, 1))
 					},
-					id:      1,
-					wantErr: false,
 				},
 				{
 					name: "Update with empty fields",
 					event: storage.Event{
-						ID:          1,
+						ID:          uuid2.UUID(uuid.New()),
 						Title:       "",
 						StartAt:     time.Now(),
-						EndAt:       time.Now(),
+						Duration:    3,
 						Description: "",
-						RemindAt:    time.Now(),
+						RemindAt:    3,
 					},
 					mock: func(tc *testCase) {
-						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, end_at = \\$3,"+
+						mock.ExpectExec("^UPDATE events SET title = \\$1, start_at = \\$2, duration = \\$3,"+
 							" description = \\$4, remind_at = \\$5 WHERE id = \\$6").
 							WithArgs(tc.event.Title,
 								tc.event.StartAt,
-								tc.event.EndAt,
+								tc.event.Duration,
 								tc.event.Description,
 								tc.event.RemindAt,
 								tc.event.ID,
 							).WillReturnResult(sqlxmock.NewResult(1, 1))
 					},
-					id:      1,
-					wantErr: false,
 				},
 			}
 
@@ -540,7 +510,7 @@ func TestUpdateDB(t *testing.T) {
 					mockData(testCase)
 
 					allure.Step(allure.Description("Update data and check result"), allure.Action(func() {
-						err = stor.Update(context.Background(), testCase.event)
+						err = stor.Update(context.Background(), &testCase.event)
 						require.NoError(t, err)
 					}))
 				})

@@ -19,11 +19,6 @@ func NewStorage(ctx context.Context, storageType string, dsn string) (storage.St
 		}
 		db = dbStorage
 
-		/* defer func() {
-			if err := dbStorage.Close(ctx); err != nil {
-				return
-			}
-		}() */
 	default:
 		storageMemory := memorystorage.New()
 		db = storageMemory

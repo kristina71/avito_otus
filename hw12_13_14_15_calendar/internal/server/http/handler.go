@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -17,7 +18,7 @@ func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	ev, err = s.app.Create(r.Context(), ev.UserID, ev.Title, ev.Description, ev.StartAt, ev.EndAt, ev.RemindAt)
+	err = s.app.Create(r.Context(), &ev)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to create event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -34,7 +35,7 @@ func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.app.Update(r.Context(), ev)
+	err = s.app.Update(r.Context(), &ev)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("error to update event: %v", err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -45,7 +46,7 @@ func (s *Server) updateEvent(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteEvent(w http.ResponseWriter, r *http.Request) {
 	type id struct {
-		ID int `json:"id"`
+		ID uuid.UUID `json:"id"`
 	}
 	var idEv id
 	err := json.NewDecoder(r.Body).Decode(&idEv)
@@ -86,7 +87,7 @@ func (s *Server) getEventsPerDay(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	events, err := s.app.ListDay(r.Context(), day)
+	events, err := s.app.GetEventsPerDay(r.Context(), day)
 	s.writeHeader(w, err, events)
 }
 
@@ -98,7 +99,7 @@ func (s *Server) getEventsPerWeek(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	events, err := s.app.ListWeek(r.Context(), day)
+	events, err := s.app.GetEventsPerWeek(r.Context(), day)
 	s.writeHeader(w, err, events)
 }
 
@@ -111,7 +112,7 @@ func (s *Server) getEventsPerMonth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err := s.app.ListMonth(r.Context(), day)
+	events, err := s.app.GetEventsPerMonth(r.Context(), day)
 	s.writeHeader(w, err, events)
 }
 

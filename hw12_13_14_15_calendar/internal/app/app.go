@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid"
+
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -28,52 +30,44 @@ func New(logger Logger, storage storage.Storage) *App {
 }
 
 func (a *App) Create(
-	ctx context.Context, userID int, title string,
-	description string, start time.Time, stop time.Time, remindAt time.Time,
-) (storage.Event, error) {
+	ctx context.Context, event *storage.Event) error {
 	var err error
-	if userID == 0 {
-		err = storage.ErrNoUserID
-		return storage.Event{}, err
-	}
-	if title == "" {
+
+	if event.Title == "" {
 		err = storage.ErrEmptyTitle
-		return storage.Event{}, err
+		return err
 	}
-	if start.After(stop) {
-		start, stop = stop, start
-	}
-	if time.Now().After(start) {
-		err = storage.ErrStartInPast
-		return storage.Event{}, err
-	}
-	/* isBusy, err := a.storage.IsTimeBusy(ctx, start, stop, 0)
-	if err != nil {
-		return storage.Event{}, err
-	}
-	if isBusy {
-		err = storage.ErrDateBusy
-		return storage.Event{}, err
-	}
-	*/
-	event := storage.Event{
-		ID:          userID,
-		Title:       title,
-		Description: description,
-		StartAt:     start,
-		EndAt:       stop,
-		RemindAt:    remindAt,
+	if event.Duration <= 0 {
+		err = storage.ErrWrongDuration
+		return err
 	}
 
+	id, err := uuid.NewV4()
+	if err != nil {
+		err = storage.ErrWrongId
+		return err
+	}
+
+	ev := &storage.Event{
+		ID:          id,
+		Title:       event.Title,
+		StartAt:     event.StartAt,
+		Duration:    event.Duration,
+		Description: event.Description,
+		UserID:      event.UserID,
+		RemindAt:    event.RemindAt,
+	}
+
+	fmt.Println(ev)
 	a.logger.Info(
 		fmt.Sprintf(
-			"%s from %s to %s created",
+			"%s from %s to %d created",
 			event.Title,
 			event.StartAt.Format(time.UnixDate),
-			event.EndAt.Format(time.UnixDate),
+			event.Duration,
 		),
 	)
-	return a.storage.Create(ctx, event)
+	return a.storage.Create(ctx, ev)
 }
 
 func (a *App) Close(ctx context.Context) error {
@@ -81,25 +75,25 @@ func (a *App) Close(ctx context.Context) error {
 	return a.storage.Close(ctx)
 }
 
-func (a *App) Get(ctx context.Context, id int) (storage.Event, error) {
-	a.logger.Info(fmt.Sprintf("event %d found", id))
-	return a.storage.Get(ctx, id)
+func (a *App) Get(ctx context.Context, event *storage.Event) (uuid.UUID, error) {
+	a.logger.Info(fmt.Sprintf("event %d found", event.ID))
+	return a.storage.Get(ctx, event)
 }
 
-func (a *App) Update(ctx context.Context, event storage.Event) error {
+func (a *App) Update(ctx context.Context, event *storage.Event) error {
 	a.logger.Info(
 		fmt.Sprintf(
-			"%s from %s to %s has been updated",
+			"%s from %s to %d has been updated",
 			event.Title,
 			event.StartAt.Format(time.UnixDate),
-			event.EndAt.Format(time.UnixDate),
+			event.Duration,
 		),
 	)
 
 	return a.storage.Update(ctx, event)
 }
 
-func (a *App) Delete(ctx context.Context, id int) error {
+func (a *App) Delete(ctx context.Context, id uuid.UUID) error {
 	a.logger.Info(
 		fmt.Sprintf(
 			"event %d has been deleted",
@@ -119,67 +113,32 @@ func (a *App) ListAll(ctx context.Context) ([]storage.Event, error) {
 	return a.storage.ListAll(ctx)
 }
 
-func (a *App) ListDay(ctx context.Context, date time.Time) ([]storage.Event, error) {
+func (a *App) GetEventsPerDay(ctx context.Context, day time.Time) ([]storage.Event, error) {
 	a.logger.Info(
 		fmt.Sprintf(
 			"get events by day %s",
-			date.Format(time.UnixDate),
+			day.Format(time.UnixDate),
 		),
 	)
-	return a.storage.ListDay(ctx, date)
+	return a.storage.GetEventsPerDay(ctx, day)
 }
 
-func (a *App) ListWeek(ctx context.Context, date time.Time) ([]storage.Event, error) {
+func (a *App) GetEventsPerWeek(ctx context.Context, beginDate time.Time) ([]storage.Event, error) {
 	a.logger.Info(
 		fmt.Sprintf(
 			"get events by week %s",
-			date.Format(time.UnixDate),
+			beginDate.Format(time.UnixDate),
 		),
 	)
-	return a.storage.ListWeek(ctx, date)
+	return a.storage.GetEventsPerWeek(ctx, beginDate)
 }
 
-func (a *App) ListMonth(ctx context.Context, date time.Time) ([]storage.Event, error) {
+func (a *App) GetEventsPerMonth(ctx context.Context, beginDate time.Time) ([]storage.Event, error) {
 	a.logger.Info(
 		fmt.Sprintf(
 			"get events by month %s",
-			date.Format(time.UnixDate),
+			beginDate.Format(time.UnixDate),
 		),
 	)
-	return a.storage.ListMonth(ctx, date)
+	return a.storage.GetEventsPerMonth(ctx, beginDate)
 }
-
-/*
-func (a *App) IsTimeBusy(ctx context.Context, date time.Time) (bool, error) {
-	return a.storage.IsTimeBusy(ctx, date)
-}
-*/
-/*
-
-func startOfDay(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
-}
-
-func endOfDay(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return time.Date(y, m, d, 23, 59, 59, int(time.Second-time.Nanosecond), t.Location())
-}
-
-func startOfWeek(t time.Time) time.Time {
-	return t.Truncate(24 * 7 * time.Hour)
-}
-
-func endOfWeek(t time.Time) time.Time {
-	return startOfWeek(t).AddDate(0, 0, 7).Add(-time.Nanosecond)
-}
-
-func startOfMonth(t time.Time) time.Time {
-	y, m, _ := t.Date()
-	return time.Date(y, m, 1, 0, 0, 0, 0, t.Location())
-}
-
-func endOfMonth(t time.Time) time.Time {
-	return startOfMonth(t).AddDate(0, 1, 0).Add(-time.Nanosecond)
-}
-*/

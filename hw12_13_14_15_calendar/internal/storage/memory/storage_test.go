@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	uuid2 "github.com/gofrs/uuid"
+	"github.com/google/uuid"
+
 	faker "github.com/bxcodec/faker/v3"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage"
 	"github.com/kristina71/avito_otus/hw12_13_14_15_calendar/internal/storage/mocks"
@@ -22,13 +25,13 @@ func TestCreate(t *testing.T) {
 		{
 			name: "Create event",
 			expectedEvent: storage.Event{
-				ID:          1,
+				ID:          uuid2.UUID(uuid.New()),
 				Title:       faker.Name(),
 				StartAt:     time.Now(),
-				EndAt:       time.Now(),
+				Duration:    3,
 				Description: faker.Sentence(),
-				UserID:      1,
-				RemindAt:    time.Now(),
+				UserID:      uuid2.UUID(uuid.New()),
+				RemindAt:    3,
 			},
 		},
 	}
@@ -38,14 +41,10 @@ func TestCreate(t *testing.T) {
 			repo := &mocks.Storage{}
 			memorystorage := New1(repo)
 
-			expected := testCase.expectedEvent
+			repo.On("Create", context.Background(), &testCase.expectedEvent).Return(nil)
 
-			repo.On("Create", context.Background(), expected).Return(expected, nil)
-
-			actualEvent, err := memorystorage.repo.Create(context.Background(), testCase.expectedEvent)
+			err := memorystorage.repo.Create(context.Background(), &testCase.expectedEvent)
 			require.NoError(t, err)
-
-			require.Equal(t, testCase.expectedEvent, actualEvent)
 		})
 	}
 }
@@ -55,13 +54,13 @@ func TestGetEvent(t *testing.T) {
 		{
 			name: "Get event by id",
 			expectedEvent: storage.Event{
-				ID:          1,
+				ID:          uuid2.UUID(uuid.New()),
 				Title:       faker.Name(),
 				StartAt:     time.Now(),
-				EndAt:       time.Now(),
+				Duration:    3,
 				Description: faker.Sentence(),
-				UserID:      1,
-				RemindAt:    time.Now(),
+				UserID:      uuid2.UUID(uuid.New()),
+				RemindAt:    3,
 			},
 		},
 	}
@@ -71,12 +70,12 @@ func TestGetEvent(t *testing.T) {
 			repo := &mocks.Storage{}
 			memorystorage := New1(repo)
 
-			repo.On("Get", context.Background(), testCase.expectedEvent.ID).Return(testCase.expectedEvent, nil)
+			repo.On("Get", context.Background(), &testCase.expectedEvent).Return(testCase.expectedEvent.ID, nil)
 
-			res, err := memorystorage.repo.Get(context.Background(), testCase.expectedEvent.ID)
+			res, err := memorystorage.repo.Get(context.Background(), &testCase.expectedEvent)
 			require.NoError(t, err)
 
-			require.Equal(t, testCase.expectedEvent, res)
+			require.Equal(t, testCase.expectedEvent.ID, res)
 		})
 	}
 }
@@ -86,13 +85,13 @@ func TestUpdate(t *testing.T) {
 		{
 			name: "Update event",
 			expectedEvent: storage.Event{
-				ID:          1,
+				ID:          uuid2.UUID(uuid.New()),
 				Title:       faker.Name(),
 				StartAt:     time.Now(),
-				EndAt:       time.Now(),
+				Duration:    3,
 				Description: faker.Sentence(),
-				UserID:      1,
-				RemindAt:    time.Now(),
+				UserID:      uuid2.UUID(uuid.New()),
+				RemindAt:    3,
 			},
 		},
 	}
@@ -103,9 +102,9 @@ func TestUpdate(t *testing.T) {
 			memorystorage := New1(repo)
 			expected := testCase.expectedEvent
 
-			repo.On("Update", context.Background(), expected).Return(nil)
+			repo.On("Update", context.Background(), &expected).Return(nil)
 
-			err := memorystorage.repo.Update(context.Background(), testCase.expectedEvent)
+			err := memorystorage.repo.Update(context.Background(), &testCase.expectedEvent)
 			require.NoError(t, err)
 		})
 	}
@@ -116,7 +115,7 @@ func TestDelete(t *testing.T) {
 		{
 			name: "Delete url",
 			expectedEvent: storage.Event{
-				ID: 1,
+				ID: uuid2.UUID(uuid.New()),
 			},
 		},
 	}
@@ -138,7 +137,7 @@ func TestDeleteAll(t *testing.T) {
 		{
 			name: "Delete all",
 			expectedEvent: storage.Event{
-				ID: 1,
+				ID: uuid2.UUID(uuid.New()),
 			},
 		},
 	}
@@ -161,31 +160,31 @@ func TestListAll(t *testing.T) {
 			name: "List all",
 			expectedEvents: []storage.Event{
 				{
-					ID:          1,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      1,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          2,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      2,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          3,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      3,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 			},
 		},
@@ -216,31 +215,31 @@ func TestListDay(t *testing.T) {
 			name: "List all",
 			expectedEvents: []storage.Event{
 				{
-					ID:          1,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      1,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          2,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      2,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          3,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      3,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 			},
 		},
@@ -256,9 +255,9 @@ func TestListDay(t *testing.T) {
 			repo := &mocks.Storage{}
 			memorystorage := New1(repo)
 			day := time.Now()
-			repo.On("ListDay", context.Background(), day).Return(testCase.expectedEvents, nil)
+			repo.On("GetEventsPerDay", context.Background(), day).Return(testCase.expectedEvents, nil)
 
-			events, err := memorystorage.repo.ListDay(context.Background(), day)
+			events, err := memorystorage.repo.GetEventsPerDay(context.Background(), day)
 			require.NoError(t, err)
 			require.Equal(t, testCase.expectedEvents, events)
 		})
@@ -271,31 +270,31 @@ func TestListWeek(t *testing.T) {
 			name: "List week",
 			expectedEvents: []storage.Event{
 				{
-					ID:          1,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      1,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          2,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      2,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          3,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      3,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 			},
 		},
@@ -311,9 +310,9 @@ func TestListWeek(t *testing.T) {
 			repo := &mocks.Storage{}
 			memorystorage := New1(repo)
 			day := time.Now()
-			repo.On("ListWeek", context.Background(), day).Return(testCase.expectedEvents, nil)
+			repo.On("GetEventsPerWeek", context.Background(), day).Return(testCase.expectedEvents, nil)
 
-			events, err := memorystorage.repo.ListWeek(context.Background(), day)
+			events, err := memorystorage.repo.GetEventsPerWeek(context.Background(), day)
 			require.NoError(t, err)
 			require.Equal(t, testCase.expectedEvents, events)
 		})
@@ -326,31 +325,31 @@ func TestListMonth(t *testing.T) {
 			name: "List month",
 			expectedEvents: []storage.Event{
 				{
-					ID:          1,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      1,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          2,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      2,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 				{
-					ID:          3,
+					ID:          uuid2.UUID(uuid.New()),
 					Title:       faker.Name(),
 					StartAt:     time.Now(),
-					EndAt:       time.Now(),
+					Duration:    3,
 					Description: faker.Sentence(),
-					UserID:      3,
-					RemindAt:    time.Now(),
+					UserID:      uuid2.UUID(uuid.New()),
+					RemindAt:    3,
 				},
 			},
 		},
@@ -366,9 +365,9 @@ func TestListMonth(t *testing.T) {
 			repo := &mocks.Storage{}
 			memorystorage := New1(repo)
 			day := time.Now()
-			repo.On("ListMonth", context.Background(), day).Return(testCase.expectedEvents, nil)
+			repo.On("GetEventsPerMonth", context.Background(), day).Return(testCase.expectedEvents, nil)
 
-			events, err := memorystorage.repo.ListMonth(context.Background(), day)
+			events, err := memorystorage.repo.GetEventsPerMonth(context.Background(), day)
 			require.NoError(t, err)
 			require.Equal(t, testCase.expectedEvents, events)
 		})

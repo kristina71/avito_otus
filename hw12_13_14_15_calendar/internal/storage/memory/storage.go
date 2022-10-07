@@ -193,3 +193,7 @@ func (s *Storage) GetEventsPerMonth(ctx context.Context, beginDate time.Time) ([
 func (s *Storage) String() string {
 	return "memory storage"
 }
+
+func (s *Storage) ListForScheduler(context.Context, time.Duration, time.Duration) ([]storage.Notification, error) {
+	return nil, nil
+}

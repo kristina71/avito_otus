@@ -22,6 +22,13 @@ type Event struct {
 	RemindAt int       `db:"remind_at" json:"remindAt"`
 }
 
+type Notification struct {
+	ID        uuid.UUID `db:"id" json:"id"`
+	Title     string    `db:"title" json:"title"`
+	TimeStart time.Time `db:"start_at" json:"start_at"`
+	UserID    uuid.UUID `db:"user_id" json:"user_id"`
+}
+
 //go:generate mockery --name=Storage --output ./mocks
 type Storage interface {
 	Create(ctx context.Context, event *Event) error
@@ -35,4 +42,5 @@ type Storage interface {
 	GetEventsPerWeek(ctx context.Context, date time.Time) ([]Event, error)
 	GetEventsPerMonth(ctx context.Context, date time.Time) ([]Event, error)
 	Close(ctx context.Context) error
+	ListForScheduler(ctx context.Context, remindFor time.Duration, period time.Duration) ([]Notification, error)
 }

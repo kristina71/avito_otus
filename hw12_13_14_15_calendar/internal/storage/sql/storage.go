@@ -222,3 +222,26 @@ func (s *Storage) GetEventsPerMonth(ctx context.Context, date time.Time) ([]stor
 
 	return events, nil
 }
+
+func (s *Storage) ListForScheduler(ctx context.Context, remindFor time.Duration, period time.Duration) ([]storage.Notification, error) {
+	from := time.Now().Add(remindFor)
+	to := from.Add(period)
+
+	query, _, err := psql.Select("id", "title", "start_at", "user_id").
+		From(tableName).Where(squirrel.Expr("start_at BETWEEN $1 AND $2", from, to)).
+		OrderBy("id desc").ToSql()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	events := []storage.Notification{}
+	err = s.db.Select(&events, query)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return events, nil
+}

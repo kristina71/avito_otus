@@ -16,6 +16,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.20.0 // indirect
 	github.com/pressly/goose v2.7.0+incompatible
+	github.com/rabbitmq/amqp091-go v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.12.0
 	github.com/steinfletcher/apitest v1.5.12
@@ -24,4 +25,5 @@ require (
 	github.com/zhashkevych/go-sqlxmock v1.5.1
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.28.0
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

@@ -188,6 +188,29 @@ func (_m *Storage) ListAll(ctx context.Context) ([]storage.Event, error) {
 	return r0, r1
 }
 
+// ListForScheduler provides a mock function with given fields: ctx, remindFor, period
+func (_m *Storage) ListForScheduler(ctx context.Context, remindFor time.Duration, period time.Duration) ([]storage.Notification, error) {
+	ret := _m.Called(ctx, remindFor, period)
+
+	var r0 []storage.Notification
+	if rf, ok := ret.Get(0).(func(context.Context, time.Duration, time.Duration) []storage.Notification); ok {
+		r0 = rf(ctx, remindFor, period)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]storage.Notification)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, time.Duration, time.Duration) error); ok {
+		r1 = rf(ctx, remindFor, period)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: ctx, event
 func (_m *Storage) Update(ctx context.Context, event *storage.Event) error {
 	ret := _m.Called(ctx, event)

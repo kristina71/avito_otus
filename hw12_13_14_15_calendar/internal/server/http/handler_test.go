@@ -25,10 +25,6 @@ func init() {
 	flag.StringVar(&configFile, "config", "../../../configs/config.yaml", "Path to configuration file")
 }
 
-// какие-то бесполезные тесты получаются здесь. Начала реализовывать, но кажется что-то не то
-// интеграционные тесты по сути будут же про то же самое
-// + в файле app_test почти тоже самое получилось
-
 func TestAPICalendar(t *testing.T) {
 	config, err := config.NewConfig(configFile)
 	if err != nil {

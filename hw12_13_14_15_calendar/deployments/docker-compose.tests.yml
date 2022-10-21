@@ -31,7 +31,7 @@ services:
     command:
       - /bin/true
     depends_on:
-      - integration-tests
+      - integration_tests
 
 volumes:
   dbdata_test:

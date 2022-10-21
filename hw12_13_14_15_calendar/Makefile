@@ -42,6 +42,15 @@ test:
 
 .PHONY: build run build-img run-img version test lint
 
+up:
+	sh ./scripts/deploy.sh up
+
+down:
+	sh ./scripts/deploy.sh down
+
+integration-tests:
+	sh ./scripts/tests-run.sh
+
 .PHONY: generate
 generate:
 	go generate ./...

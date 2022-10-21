@@ -55,6 +55,31 @@ func NewServer(logger Logger, app *app.App) *Server {
 	return service
 }
 
+func NewServer1(logger Logger, app *app.App) *Server {
+	service := &Server{logger: logger, app: app}
+	return service
+}
+
+func NewRouter(service *Server) http.Handler {
+	service.router = mux.NewRouter()
+	service.router.Use(loggingMiddleware(service.logger))
+	service.router.HandleFunc("/calendar/get", service.getEvents).Methods("GET")
+	service.router.HandleFunc("/calendar/add", service.createEvent).Methods("POST")
+	service.router.HandleFunc("/calendar/update/{eventId}", service.updateEvent).Methods("PUT")
+	service.router.HandleFunc("/calendar/delete/{eventId}", service.deleteEvent).Methods("DELETE")
+	service.router.HandleFunc("/calendar/deleteall", service.deleteAllEvents).Methods("DELETE")
+	service.router.HandleFunc("/calendar/getEventsPerDay", service.getEventsPerDay).Methods("GET")
+	service.router.HandleFunc("/calendar/getEventsPerWeek", service.getEventsPerWeek).Methods("GET")
+	service.router.HandleFunc("/calendar/getEventsPerMonth", service.getEventsPerMonth).Methods("GET")
+
+	// для отображения ui
+	service.router.Handle("/", http.FileServer(http.Dir("./ui"))).Methods(http.MethodGet)
+
+	staticDir := "/ui/js/"
+	service.router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
+	return service.router
+}
+
 func (s *Server) Start(ctx context.Context, addr string) error {
 	s.logger.Info("HTTP server starting..." + addr)
 
